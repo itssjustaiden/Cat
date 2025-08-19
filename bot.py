@@ -443,6 +443,57 @@ async def catfact(ctx):
             else:
                 await ctx.send("couldn’t fetch cat facts")
 
+random_string = 1407381269188313099
+
+@bot.event
+async def on_message_delete(message):
+    if message.author.bot or not message.guild:
+        return
+
+    log_channel = bot.get_channel(random_string)
+    if log_channel is None:
+        return
+
+    deletedEMBED = discord.Embed(
+        title="🗑️",
+        color=discord.Color.red()
+    )
+    deletedEMBED.add_field(name="author", value=str(message.author), inline=False)
+    deletedEMBED.add_field(name="channel", value=message.channel.mention, inline=False)
+    deletedEMBED.add_field(
+        name="content",
+        value=message.content if message.content else "*no text*",
+        inline=False
+    )
+    if message.attachments:
+        urls = "\n".join([a.url for a in message.attachments])
+        deletedEMBED.add_field(name="attachments", value=urls, inline=False)
+
+    deletedEMBED.set_footer(text=f"message id: {message.id}")
+    await log_channel.send(embed=deletedEMBED)
+
+
+@bot.event
+async def on_message_edit(before, after):
+    if before.author.bot or not before.guild:
+        return
+    if before.content == after.content:
+        return
+
+    log_channel = bot.get_channel(random_string)
+    if log_channel is None:
+        return
+
+    editedEMBED = discord.Embed(
+        title="✏️",
+        color=discord.Color.orange()
+    )
+    editedEMBED.add_field(name="author", value=str(before.author), inline=False)
+    editedEMBED.add_field(name="channel", value=before.channel.mention, inline=False)
+    editedEMBED.add_field(name="before", value=before.content or "*no text*", inline=False)
+    editedEMBED.add_field(name="after", value=after.content or "*no text*", inline=False)
+    editedEMBED.set_footer(text=f"message id: {before.id}")
+    await log_channel.send(embed=editedEMBED)
 # ---- Meow! ---- #
 token = os.getenv("BOT_TOKEN")
 if not token:
