@@ -23,6 +23,10 @@ def run_flask():
 
 Thread(target=run_flask).start()
 
+@bot.event
+async def on_ready():
+    print(f"Logged in as {bot.user}")
+
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
@@ -58,11 +62,7 @@ async def cat_spam():
         wait_time = random.randint(1, 10) * 60
         await asyncio.sleep(wait_time)
 
-@bot.event
-async def on_ready():
-    print(f"Logged in as {bot.user}")
-    bot.loop.create_task(cat_spam())
-
+bot.loop.create_task(cat_spam())
 
 @bot.event
 async def on_message(message):
