@@ -107,6 +107,7 @@ help_pages.append(embed1)
 embed2 = discord.Embed(title="MEOW - Page 2", description="more commands:", color=discord.Color.purple())
 embed2.add_field(name="$joke", value="gets a random joke", inline=False)
 embed2.add_field(name="$ship <user1> <user2>", value="ships user and user!", inline=False)
+embed2.add_field(name="$ToD", value="play truth or dare", inline=False)
 help_pages.append(embed2)
 
 class HelpView(View):
@@ -361,7 +362,56 @@ async def ghostping(ctx, member: discord.Member, channel: discord.TextChannel = 
     await ctx.message.delete()
     await asyncio.sleep(1)
     await msg.delete()
+truth_list = []
+used_truth = []
 
+dare_list = []
+used_dare = []
+
+async def fetch_list(url):
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as resp:
+            text = await resp.text()
+            return text.splitlines()
+
+async def get_random_item(lst, used_lst, url):
+    if not lst:
+        lst.extend(await fetch_list(url))
+    available = [i for i in range(len(lst)) if i not in used_lst]
+    if not available:
+        used_lst.clear()
+        available = list(range(len(lst)))
+    choice = random.choice(available)
+    used_lst.append(choice)
+    return lst[choice]
+
+class ToDView(View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.button(label="Truth", style=discord.ButtonStyle.primary)
+    async def truth_button(self, interaction: discord.Interaction, button: Button):
+        text = await get_random_item(truth_list, used_truth, "https://raw.githubusercontent.com/itssjustaiden/SomethingThatsNotCheats/main/Truth.txt")
+        embed = interaction.message.embeds[0]
+        embed.description = f"**Truth:** {text}"
+        await interaction.response.edit_message(embed=embed)
+
+    @discord.ui.button(label="Dare", style=discord.ButtonStyle.primary)
+    async def dare_button(self, interaction: discord.Interaction, button: Button):
+        text = await get_random_item(dare_list, used_dare, "https://raw.githubusercontent.com/itssjustaiden/SomethingThatsNotCheats/main/Dare.txt")
+        embed = interaction.message.embeds[0]
+        embed.description = f"**Dare:** {text}"
+        await interaction.response.edit_message(embed=embed)
+
+    @discord.ui.button(label="Stop", style=discord.ButtonStyle.danger)
+    async def stop_button(self, interaction: discord.Interaction, button: Button):
+        await interaction.message.delete()
+
+@bot.command()
+async def ToD(ctx):
+    embed = discord.Embed(title="🎲 Truth or Dare", description="Choose an option below!", color=discord.Color.purple())
+    view = ToDView()
+    await ctx.send(embed=embed, view=view)
 token = os.getenv("BOT_TOKEN")
 if not token:
     raise ValueError("BOT_TOKEN not set")
