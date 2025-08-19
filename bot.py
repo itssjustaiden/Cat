@@ -37,9 +37,6 @@ kitty_active = False
 Allowed_Users = [1343941910309634078, 1276629095077249077]
 
 
-
-
-async def cat_thread_spammer():
 CAT_MESSAGES = [
     "meow",
     "zzz time...",
@@ -48,6 +45,8 @@ CAT_MESSAGES = [
     "mreow~"
 ]
 THREAD_ID = 1407466187377348750
+
+async def cat_thread_spammer():
     await bot.wait_until_ready()
     thread = await bot.fetch_channel(THREAD_ID)
     while True:
