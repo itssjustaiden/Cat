@@ -30,7 +30,6 @@ async def on_ready():
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
-
 bot = commands.Bot(command_prefix="$", intents=intents)
 bot.remove_command("help")
 
@@ -59,7 +58,7 @@ async def cat_spam():
     while True:
         msg = random.choice(cat_quotes)
         await thread.send(msg)
-        wait_time = random.randint(1, 10) * 60
+        wait_time = random.randint(1, 7) * 60
         await asyncio.sleep(wait_time)
 
 bot.loop.create_task(cat_spam())
