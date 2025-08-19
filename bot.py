@@ -33,21 +33,10 @@ bot.remove_command("help")
 kitty_active = False
 Allowed_Users = [1343941910309634078, 1276629095077249077]
 
-REPL_URL = "https://e66d155f-413f-474c-9e18-d9afa6c1fc4c-00-pnjjqxy13kkh.riker.replit.dev"
-
-async def self_ping():
-    async with aiohttp.ClientSession() as session:
-        while True:
-            try:
-                await session.get(REPL_URL)
-            except:
-                pass
-            await asyncio.sleep(random.randint(55, 75))
 @bot.event
 async def on_ready():
     print(f"Logged in as {bot.user}")
-
-bot.loop.create_task(self_ping())
+    
 @bot.event
 async def on_message(message):
     if message.author.bot:
