@@ -32,7 +32,6 @@ bot.remove_command("help")
 
 kitty_active = False
 Allowed_Users = [1343941910309634078, 1276629095077249077]
-_keepalive_task = None
 # ===== i FUCKING hate replit ===== #
 async def keep_alive_forever():
     hc_url = "https://hc-ping.com/1999b0bf-5feb-483a-baf3-2b89491edaf4"
@@ -54,7 +53,9 @@ async def keep_alive_forever():
 @bot.event
 async def on_ready():
     print(f"Logged in as {bot.user}")
-    bot.loop.create_task(keep_alive_forever())
+
+
+bot.loop.create_task(keep_alive_forever())
 
 @bot.event
 async def on_message(message):
