@@ -41,7 +41,7 @@ async def on_ready():
     print(f"Logged in as {bot.user}")
     spam_cats.start()
 
-@tasks.loop(minutes=2.5)
+@tasks.loop(minutes=1)
 async def spam_cats():
     thread = await bot.fetch_channel(THREAD_ID)
     await thread.send(random.choice(CAT_MESSAGES))
