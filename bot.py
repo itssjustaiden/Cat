@@ -111,6 +111,7 @@ embed2.add_field(name="$ship <user1> <user2>", value="ships user and user!", inl
 embed2.add_field(name="$ToD", value="play truth or dare", inline=False)
 embed2.add_field(name="$compliment <user>", value="compliment someone", inline=False)
 embed2.add_field(name="$catfact", value="gives you a random cat fact", inline=False)
+embed2.add_field(name="$eightball <question>", value="eight ball", inline=False)
 help_pages.append(embed2)
 
 class HelpView(View):
@@ -495,6 +496,38 @@ async def on_message_edit(before, after):
     editedEMBED.add_field(name="after", value=after.content or "*no text*", inline=False)
     editedEMBED.set_footer(text=f"message id: {before.id}")
     await log_channel.send(embed=editedEMBED)
+
+@bot.command()
+async def eightball(ctx, *, question: str):
+    responses = [
+        "fr, no way",
+        "deadass yes",
+        "nahh, try again",
+        "100% maybe",
+        "bro, ask later",
+        "big yikes, no",
+        "lowkey yes",
+        "fr fr, absolutely",
+        "lol no",
+        "idk bro, seems sus",
+        "yep, no cap",
+        "not in a million years",
+        "ask ur mom",
+        "aye, could be",
+        "fr, do it",
+        "nah fam",
+        "probably",
+        "definitely not",
+        "on god yes",
+        "skrrt, try again"
+    ]
+    answer = random.choice(responses)
+    eightballbed = discord.Embed(
+        title=f"🎱 says:",
+        description=f"**Q:** {question}\n**A:** {answer}",
+        color=discord.Color.purple()
+    )
+    await ctx.send(embed=embed)
 # ---- Meow! ---- #
 token = os.getenv("BOT_TOKEN")
 if not token:
