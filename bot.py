@@ -429,6 +429,20 @@ async def ToD(ctx):
     embed = discord.Embed(title="Truth or Dare", description="Choose an option below!", color=discord.Color.purple())
     view = ToDView()
     await ctx.send(embed=embed, view=view)
+@bot.command()
+async def catfact(ctx):
+    url = "https://raw.githubusercontent.com/itssjustaiden/SomethingThatsNotCheats/main/CarFacts.txt"
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as resp:
+            if resp.status == 200:
+                text = await resp.text()
+                facts = text.splitlines()
+                fact = random.choice(facts)
+                await ctx.send(f"{fact}")
+            else:
+                await ctx.send("couldn’t fetch cat facts")
+
+# ---- Meow! ---- #
 token = os.getenv("BOT_TOKEN")
 if not token:
     raise ValueError("BOT_TOKEN not set")
