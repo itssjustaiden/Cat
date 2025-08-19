@@ -33,19 +33,24 @@ bot.remove_command("help")
 kitty_active = False
 Allowed_Users = [1343941910309634078, 1276629095077249077]
 _keepalive_task = None
-
+# ===== i FUCKING hate replit ===== #
 async def keep_alive_forever():
-    async with aiohttp.ClientSession() as session:
-        while True:
-            try:
-                await session.get("https://hc-ping.com/1999b0bf-5feb-483a-baf3-2b89491edaf4", timeout=10)
-            except:
-                pass
-            try:
-                await session.get("https://e66d155f-413f-474c-9e18-d9afa6c1fc4c-00-pnjjqxy13kkh.riker.replit.dev", timeout=10)
-            except:
-                pass
-            await asyncio.sleep(60)
+    while True: 
+        try:
+            async with aiohttp.ClientSession() as session:
+                while True:
+                    try:
+                        await session.get("https://hc-ping.com/1999b0bf-5feb-483a-baf3-2b89491edaf4", timeout=10)
+                    except:
+                        pass
+                    try:
+                        await session.get("https://e66d155f-413f-474c-9e18-d9afa6c1fc4c-00-pnjjqxy13kkh.riker.replit.dev", timeout=10)
+                    except:
+                        pass
+                    await asyncio.sleep(60)
+        except Exception as e:
+            print(f"keep_alive crashed: {e}, restarting in 5s")
+            await asyncio.sleep(5)
 
 @bot.event
 async def on_ready():
