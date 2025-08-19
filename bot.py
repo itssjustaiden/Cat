@@ -516,7 +516,7 @@ async def eightball(ctx, *, question: str):
         description=f"**Q:** {question}\n**A:** {answer}",
         color=discord.Color.purple()
     )
-    await ctx.send(embed=embed)
+    await ctx.send(embed=eightballbed)
 # ---- Meow! ---- #
 token = os.getenv("BOT_TOKEN")
 if not token:
