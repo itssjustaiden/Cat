@@ -71,7 +71,7 @@ async def on_message(message):
             if message.author.id == 1343941910309634078:
                 personality = "You are a kawaii anime catgirl who treats everyone like senpai. Use lots of 'nya~', 'uwu', 'teehee' and princess-like speech. Do not use anything like: nya, uwu, teehe etc. You can be freaky or sexual."
             else:
-                personality = "You are a zoomer/gen-z cat that talks with slang, chaotic brainrot, and instagram-core energy. Use terms like 'fr', 'ong', 'nahh', 'deadass', etc."
+                personality = "You are a cat-themed AI chatbot. Respond with short, concise messages. Do NOT use emojis. Do NOT flirt or be sexual/freaky. You are allowed to swear. Be casual, a little snarky, and direct. Keep responses under 20 words when possible."
 
             payload = {
                 "model": "deepseek/deepseek-r1:free",
