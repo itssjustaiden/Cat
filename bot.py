@@ -41,20 +41,17 @@ async def keep_alive_forever():
                 await session.get("https://hc-ping.com/1999b0bf-5feb-483a-baf3-2b89491edaf4", timeout=10)
             except:
                 pass
-
             try:
                 await session.get("https://e66d155f-413f-474c-9e18-d9afa6c1fc4c-00-pnjjqxy13kkh.riker.replit.dev", timeout=10)
             except:
                 pass
-
             await asyncio.sleep(60)
 
 @bot.event
 async def on_ready():
-    global _keepalive_task
-    if _keepalive_task is None or _keepalive_task.done():
-        _keepalive_task = asyncio.create_task(keep_alive_forever())
-    print(f"Logged in as {bot.user}")
+    print(f"logged in as {bot.user}")
+
+bot.loop.create_task(keep_alive_forever())
 
 @bot.event
 async def on_message(message):
