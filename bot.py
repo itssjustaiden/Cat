@@ -33,29 +33,20 @@ bot.remove_command("help")
 kitty_active = False
 Allowed_Users = [1343941910309634078, 1276629095077249077]
 # ===== i FUCKING hate replit ===== #
-async def keep_alive_forever():
-    hc_url = "https://hc-ping.com/1999b0bf-5feb-483a-baf3-2b89491edaf4"
-    flask_url = "https://e66d155f-413f-474c-9e18-d9afa6c1fc4c-00-pnjjqxy13kkh.riker.replit.dev"
-
+async def self_ping():
+    fuckassreplit = "https://e66d155f-413f-474c-9e18-d9afa6c1fc4c-00-pnjjqxy13kkh.riker.replit.dev"
     async with aiohttp.ClientSession() as session:
         while True:
             try:
-                await session.get(hc_url)
+                await session.get(fuckassreplit)
             except:
                 pass
-            try:
-                await session.get(flask_url)
-            except:
-                pass
-            await asyncio.sleep(60)
-
+            await asyncio.sleep(30)
 
 @bot.event
 async def on_ready():
     print(f"Logged in as {bot.user}")
-
-
-bot.loop.create_task(keep_alive_forever())
+    bot.loop.create_task(self_ping())
 
 @bot.event
 async def on_message(message):
