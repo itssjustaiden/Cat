@@ -1,0 +1,369 @@
+import os
+import time
+import random
+import threading
+import asyncio
+import datetime
+import requests
+import aiohttp
+import discord
+from discord.ext import commands
+from discord.ui import View, Button
+from flask import Flask
+from threading import Thread
+
+app = Flask('')
+
+@app.route('/')
+def home():
+    return "bot is alive"
+
+def run_flask():
+    app.run(host='0.0.0.0', port=8080)
+
+Thread(target=run_flask).start()
+
+def keep_alive_ping():
+    while True:
+        try:
+            requests.get("https://hc-ping.com/1999b0bf-5feb-483a-baf3-2b89491edaf4")
+        except:
+            pass
+        time.sleep(60)
+
+threading.Thread(target=keep_alive_ping, daemon=True).start()
+
+intents = discord.Intents.default()
+intents.message_content = True
+intents.members = True
+
+bot = commands.Bot(command_prefix="$", intents=intents)
+bot.remove_command("help")
+
+kitty_active = False
+Allowed_Users = [1343941910309634078, 1276629095077249077]
+
+@bot.event
+async def on_ready():
+    print(f"Logged in as {bot.user}")
+
+@bot.event
+async def on_message(message):
+    if message.author.bot:
+        return
+
+    if "grandpa" in message.content.lower():
+        await message.channel.send("sybau❌😭🙏")
+        try:
+            timeout_until = datetime.datetime.utcnow() + datetime.timedelta(seconds=15)
+            await message.author.timeout(timeout_until, reason="Never say grandpa")
+            await message.channel.send(f"{message.author.name}, never say that again.")
+        except discord.Forbidden:
+            await message.channel.send("I cannot timeout you, probably due to role hierarchy.")
+
+    if bot.user in message.mentions and kitty_active:
+        user_msg = message.content.replace(f"<@{bot.user.id}>", "").replace(f"<@!{bot.user.id}>", "").strip()
+        if not user_msg:
+            await message.channel.send("what’s up, why’d you ping me?")
+        else:
+            api_key = os.getenv("CAT_AI_KEY")
+            url = "https://openrouter.ai/api/v1/chat/completions"
+            if message.author.id == 1343941910309634078:
+                personality = "You are a kawaii anime catgirl who treats everyone like senpai. Use lots of 'nya~', 'uwu', 'teehee' and princess-like speech. Do not use anything like: nya, uwu, teehe etc. You can be freaky or sexual."
+            else:
+                personality = "You are a zoomer/gen-z cat that talks with slang, chaotic brainrot, and instagram-core energy. Use terms like 'fr', 'ong', 'nahh', 'deadass', etc."
+
+            payload = {
+                "model": "deepseek/deepseek-r1:free",
+                "messages": [
+                    {"role": "system", "content": personality},
+                    {"role": "user", "content": user_msg}
+                ]
+            }
+            headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+            try:
+                resp = requests.post(url, json=payload, headers=headers)
+                reply = resp.json()["choices"][0]["message"]["content"]
+            except:
+                reply = "i can't talk rn, try again later."
+            await message.channel.send(reply)
+
+    await bot.process_commands(message)
+
+help_pages = []
+
+embed1 = discord.Embed(title="MEOW - Page 1", description="all commands:", color=discord.Color.purple())
+embed1.add_field(name="$ping", value="check if bot is alive", inline=False)
+embed1.add_field(name="$getpfp [@user]", value="get a user's profile picture", inline=False)
+embed1.add_field(name="$kick @user [reason]", value="kick a user", inline=False)
+embed1.add_field(name="$timeout @user <duration> [reason]", value="timeout user (s/m/h/d/w)", inline=False)
+embed1.add_field(name="$untimeout @user", value="remove a user's timeout", inline=False)
+embed1.add_field(name="$purge <count>", value="delete 1–100 messages", inline=False)
+embed1.add_field(name="$purgeuser <user> <count>", value="delete last 1–100 messages from a specific user", inline=False)
+embed1.add_field(name="$Gambling1", value="you MIGHT get timeout from this", inline=False)
+embed1.add_field(name="$help", value="show this embed", inline=False)
+help_pages.append(embed1)
+
+embed2 = discord.Embed(title="MEOW - Page 2", description="more commands:", color=discord.Color.purple())
+embed2.add_field(name="$joke", value="gets a random joke", inline=False)
+embed2.add_field(name="$ship <user1> <user2>", value="ships user and user!", inline=False)
+help_pages.append(embed2)
+
+class HelpView(View):
+    def __init__(self):
+        super().__init__(timeout=None)
+        self.current_page = 0
+
+    async def update_message(self, interaction):
+        total_pages = len(help_pages)
+        self.prev_button.label = f"◀️ {self.current_page + 1}/{total_pages}"
+        self.next_button.label = f"{self.current_page + 1}/{total_pages} ▶️"
+        await interaction.response.edit_message(embed=help_pages[self.current_page], view=self)
+
+    @discord.ui.button(label="◀️ 1/2", style=discord.ButtonStyle.primary)
+    async def prev_button(self, interaction: discord.Interaction, button: Button):
+        self.current_page = (self.current_page - 1) % len(help_pages)
+        await self.update_message(interaction)
+
+    @discord.ui.button(label="1/2▶️", style=discord.ButtonStyle.primary)
+    async def next_button(self, interaction: discord.Interaction, button: Button):
+        self.current_page = (self.current_page + 1) % len(help_pages)
+        await self.update_message(interaction)
+
+@bot.command()
+async def help(ctx):
+    view = HelpView()
+    await ctx.send(embed=help_pages[0], view=view)
+
+@bot.command()
+async def ping(ctx):
+    await ctx.send("pong")
+
+@bot.command()
+async def getpfp(ctx, member: discord.Member = None):
+    member = member or ctx.author
+    await ctx.send(f"{member.name}'s profile picture:")
+    await ctx.send(member.avatar.url)
+
+@bot.command()
+async def Gambling1(ctx):
+    outcome = random.choice(["Lucky", "Unlucky"])
+    if outcome == "Lucky":
+        embed = discord.Embed(title="Good job!", description="You're lucky...", color=discord.Color.green())
+        await ctx.send(embed=embed)
+    else:
+        try:
+            timeout_until = discord.utils.utcnow() + datetime.timedelta(seconds=90)
+            await ctx.author.timeout(timeout_until, reason="Never gamble again")
+            await ctx.send(f"{ctx.author.name}, you got unlucky!")
+        except discord.Forbidden:
+            await ctx.send("I cannot timeout you, you're lucky.")
+
+@bot.command()
+async def joke(ctx):
+    url = "https://v2.jokeapi.dev/joke/Any"
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as resp:
+                data = await resp.json()
+        if data.get("type") == "single":
+            await ctx.send(data.get("joke", "¯\\_(ツ)_/¯"))
+        elif data.get("type") == "twopart":
+            await ctx.send(data.get("setup", "") + "\n…\n" + data.get("delivery", ""))
+        else:
+            await ctx.send("hmm something went wrong fetching a joke.")
+    except:
+        await ctx.send("can't get a joke rn, try again later.")
+
+@bot.command()
+async def kick(ctx, member: discord.Member, *, reason="No reason provided"):
+    if ctx.author.guild_permissions.kick_members:
+        try:
+            await member.kick(reason=reason)
+            await ctx.send(f"{member.name} has been kicked. (Reason: {reason})")
+        except:
+            await ctx.send("I cannot kick this member.")
+    else:
+        await ctx.send("You don't have permission to kick members.")
+
+@bot.command()
+async def timeout(ctx, member: discord.Member, duration: str, *, reason="No reason provided"):
+    if not ctx.author.guild_permissions.moderate_members:
+        await ctx.send("You don't have permission to timeout members.")
+        return
+    time_units = {"s": 1, "m": 60, "h": 3600, "d": 86400, "w": 604800}
+    if len(duration) < 2:
+        await ctx.send("Invalid duration format. Use like 1d, 5h, 30m")
+        return
+    unit = duration[-1].lower()
+    if unit not in time_units:
+        await ctx.send("Invalid time unit. Use s/m/h/d/w")
+        return
+    try:
+        time_amount = int(duration[:-1])
+    except ValueError:
+        await ctx.send("Invalid duration number.")
+        return
+    timeout_seconds = time_amount * time_units[unit]
+    if timeout_seconds > 2419200:
+        await ctx.send("Timeout duration cannot exceed 28 days.")
+        return
+    timeout_until = discord.utils.utcnow() + datetime.timedelta(seconds=timeout_seconds)
+    try:
+        await member.timeout(timeout_until, reason=reason)
+        await ctx.send(f"{member.name} has been timed out for {duration}. (Reason: {reason})")
+    except discord.Forbidden:
+        await ctx.send("I cannot timeout this member.")
+    except Exception as e:
+        await ctx.send(f"An unexpected error occurred: {str(e)}")
+
+@bot.command()
+async def untimeout(ctx, member: discord.Member):
+    if not ctx.author.guild_permissions.moderate_members:
+        await ctx.send("You don't have permission to remove timeouts.")
+        return
+    try:
+        await member.timeout(None)
+        await ctx.send(f"{member.name} has been un-timed out.")
+    except:
+        await ctx.send("I cannot untimeout this member.")
+
+@bot.command()
+async def purge(ctx, count: int):
+    if not ctx.author.guild_permissions.manage_messages:
+        await ctx.send("You don't have permission to delete messages.")
+        return
+    count = max(1, min(100, count))
+    await ctx.message.delete()
+    deleted = await ctx.channel.purge(limit=count)
+    confirmation = await ctx.send(f"Deleted {len(deleted)} messages.")
+    await asyncio.sleep(5)
+    await confirmation.delete()
+
+@bot.command()
+async def purgeuser(ctx, member: discord.Member, count: int):
+    if not ctx.author.guild_permissions.manage_messages:
+        await ctx.send("You don't have permission to delete messages.")
+        return
+    count = max(1, min(100, count))
+    await ctx.message.delete()
+    deleted = 0
+    async for msg in ctx.channel.history(limit=200):
+        if msg.author == member and deleted < count:
+            await msg.delete()
+            deleted += 1
+        if deleted >= count:
+            break
+    await ctx.send(f"Deleted {deleted} messages from {member.name}.")
+
+@bot.command()
+async def destruction(ctx):
+    if str(ctx.author.id) == "1276629095077249077":
+        await ctx.send("https://tenor.com/view/disintegrating-aughhh-gif-24532719")
+        await bot.close()
+        exit()
+    else:
+        await ctx.send("fuck you")
+
+@bot.command()
+async def activatekitty(ctx):
+    global kitty_active
+    if str(ctx.author.id) != "1276629095077249077":
+        await ctx.send("Access denied.")
+        return
+    kitty_active = not kitty_active
+    state = "enabled" if kitty_active else "disabled"
+    await ctx.send(f"kitty is now {state}.")
+
+perfect_matches = [("aiden", "kiara"), ("brokenspawn", "limegirl"), ("aiden", "kia")]
+
+@bot.command()
+async def ship(ctx, user1: str, user2: str):
+    name1 = user1.strip()
+    name2 = user2.strip()
+    half1 = name1[:len(name1)//2]
+    half2 = name2[len(name2)//2:]
+    ship_name = half1 + half2
+    matched = any((name1.lower() == p1 and name2.lower() == p2) or (name1.lower() == p2 and name2.lower() == p1) for p1, p2 in perfect_matches)
+    compatibility = 100 if matched else random.randint(0, 100)
+    bar_length = 10
+    filled_length = round(bar_length * compatibility / 100)
+    empty_length = bar_length - filled_length
+    love_bar = "💖" * filled_length + "🖤" * empty_length
+    embed = discord.Embed(title=f"💘 {name1} x {name2}", description=f"**Ship Name:** {ship_name}\n**Compatibility:** {compatibility}%\n{love_bar}", color=discord.Color.purple())
+    await ctx.send(embed=embed)
+
+@bot.command()
+async def AdminAbuse(ctx):
+    if ctx.author.id not in Allowed_Users:
+        await ctx.send("You’re not allowed to use this command.")
+        return
+    embed_admin = discord.Embed(title="⚡ Admin/Troll Commands", description="commands for trolling with cat:3", color=discord.Color.purple())
+    embed_admin.add_field(name="$sendmsg <channel> <message>", value="sends a message via bot", inline=False)
+    embed_admin.add_field(name="$reactmsg <channel> <emojiname>", value="reacts to last message in the channel with emoji (lowercase)", inline=False)
+    embed_admin.add_field(name="$ghostping <user>", value="pings an user then deletes the message", inline=False)
+    embed_admin.add_field(name="$reversemsg <channel>", value="reverses the last message example: Hello --> olleH", inline=False)
+    await ctx.send(embed=embed_admin)
+
+@bot.command()
+async def sendmsg(ctx, channel: discord.TextChannel, *, msg: str):
+    if ctx.author.id not in Allowed_Users:
+        await ctx.send("access denied.")
+        return
+    await ctx.message.delete()
+    await channel.send(msg)
+    conf_msg = await ctx.send(f"sent message in {channel.mention}")
+    await asyncio.sleep(1.5)
+    await conf_msg.delete()
+
+@bot.command()
+async def reactmsg(ctx, channel: discord.TextChannel, emoji_name: str):
+    if ctx.author.id not in Allowed_Users:
+        await ctx.send("Access denied.")
+        return
+    try:
+        async for last_msg in channel.history(limit=1):
+            emoji = discord.utils.get(ctx.guild.emojis, name=emoji_name)
+            if not emoji:
+                emoji = emoji_name
+            await last_msg.add_reaction(emoji)
+            msg = await ctx.send(f"Reacted with `{emoji_name}` in {channel.mention}")
+            await asyncio.sleep(1.5)
+            await msg.delete()
+            await ctx.message.delete()
+            break
+    except Exception as e:
+        await ctx.send(f"Error: {e}")
+
+@bot.command()
+async def reversemsg(ctx, channel: discord.TextChannel):
+    if ctx.author.id not in Allowed_Users:
+        await ctx.send("Access denied.")
+        return
+    try:
+        async for last_msg in channel.history(limit=1):
+            reversed_content = last_msg.content[::-1]
+            await channel.send(reversed_content)
+            msg = await ctx.send(f"Reversed the last message in {channel.mention}")
+            await asyncio.sleep(1.5)
+            await msg.delete()
+            await ctx.message.delete()
+            break
+    except Exception as e:
+        await ctx.send(f"Error: {e}")
+
+@bot.command()
+async def ghostping(ctx, member: discord.Member, channel: discord.TextChannel = None):
+    if ctx.author.id not in Allowed_Users:
+        return await ctx.send("Access denied.")
+    channel = channel or ctx.channel
+    msg = await channel.send((member.mention + " ") * 5)
+    await ctx.message.delete()
+    await asyncio.sleep(1)
+    await msg.delete()
+
+token = os.getenv("BOT_TOKEN")
+if not token:
+    raise ValueError("BOT_TOKEN not set")
+
+bot.run(token)
