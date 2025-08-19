@@ -16,22 +16,32 @@ app = Flask('')
 
 @app.route('/')
 def home():
-    return "bot is alive"
+    return "Aiden was here"
 
 def run_flask():
     app.run(host='0.0.0.0', port=8080)
 
 Thread(target=run_flask).start()
 
-def keep_alive_ping():
-    while True:
-        try:
-            requests.get("https://hc-ping.com/1999b0bf-5feb-483a-baf3-2b89491edaf4")
-        except:
-            pass
-        time.sleep(60)
+async def keep_alive_forever():
+    hc_url = "https://hc-ping.com/1999b0bf-5feb-483a-baf3-2b89491edaf4"
+    flask_url = "https://e66d155f-413f-474c-9e18-d9afa6c1fc4c-00-pnjjqxy13kkh.riker.replit.dev"
 
-threading.Thread(target=keep_alive_ping, daemon=True).start()
+    async with aiohttp.ClientSession() as session:
+        while True:
+            try:
+                await session.get(hc_url)
+            except:
+                pass
+
+            try:
+                await session.get(flask_url)
+            except:
+                pass
+
+            await asyncio.sleep(60)
+
+bot.loop.create_task(keep_alive_forever())
 
 intents = discord.Intents.default()
 intents.message_content = True
