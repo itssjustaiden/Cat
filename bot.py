@@ -35,17 +35,15 @@ Allowed_Users = [1343941910309634078, 1276629095077249077]
 
 CAT_MESSAGES = ["meow", "zzz time", "purr", "hiss", "mraw"]
 THREAD_ID = 1407466187377348750
-async def spam_cats():
-    await bot.wait_until_ready()
-    thread = await bot.fetch_channel(THREAD_ID)
-    while True:
-        await thread.send(random.choice(CAT_MESSAGES))
-        await asyncio.sleep(35)
-
-asyncio.create_task(spam_cats())
 @bot.event
 async def on_ready():
     print(f"Logged in as {bot.user}")
+    spam_cats.start
+
+@tasks.loop(minutes=2.5)
+async def spam_cats():
+    thread = await bot.fetch_channel(THREAD_ID)
+    await thread.send(random.choice(CAT_MESSAGES))
 
 @bot.event
 async def on_message(message):
