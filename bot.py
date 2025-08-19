@@ -35,7 +35,11 @@ bot.remove_command("help")
 
 kitty_active = False
 Allowed_Users = [1343941910309634078, 1276629095077249077]
-THREAD_ID = 1407466187377348750
+
+
+
+
+async def cat_thread_spammer():
 CAT_MESSAGES = [
     "meow",
     "zzz time...",
@@ -43,15 +47,12 @@ CAT_MESSAGES = [
     "hiss",
     "mreow~"
 ]
-
 THREAD_ID = 1407466187377348750
-
-async def cat_thread_spammer():
     await bot.wait_until_ready()
     thread = await bot.fetch_channel(THREAD_ID)
     while True:
         await thread.send(random.choice(CAT_MESSAGES))
-        await asyncio.sleep(120)
+        await asyncio.sleep(60)
 
 bot.loop.create_task(cat_thread_spammer())
 
