@@ -23,9 +23,6 @@ def run_flask():
 
 Thread(target=run_flask).start()
 
-@bot.event
-async def on_ready():
-    print(f"Logged in as {bot.user}")
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -46,6 +43,9 @@ async def spam_cats():
         await asyncio.sleep(35)
 
 asyncio.create_task(spam_cats())
+@bot.event
+async def on_ready():
+    print(f"Logged in as {bot.user}")
 
 @bot.event
 async def on_message(message):
