@@ -417,16 +417,16 @@ async def compliment(ctx, member: discord.Member = None):
                 text = await resp.text()
         lines = [line.strip() for line in text.split("\n") if line.strip()]
         if not lines:
-            await ctx.send("no compliments available rn.")
+            await ctx.send("no compliments available")
             return
         choice = random.choice(lines)
         await ctx.send(f"{member.mention}, {choice}")
     except:
-        await ctx.send("can't fetch a compliment rn, try again later.")
+        await ctx.send("can't fetch, try again later.")
 
 @bot.command()
 async def ToD(ctx):
-    embed = discord.Embed(title="🎲 Truth or Dare", description="Choose an option below!", color=discord.Color.purple())
+    embed = discord.Embed(title="Truth or Dare", description="Choose an option below!", color=discord.Color.purple())
     view = ToDView()
     await ctx.send(embed=embed, view=view)
 token = os.getenv("BOT_TOKEN")
