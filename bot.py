@@ -85,7 +85,7 @@ async def on_message(message):
                 resp = requests.post(url, json=payload, headers=headers)
                 reply = resp.json()["choices"][0]["message"]["content"]
             except:
-                reply = "i can't talk rn, try again later."
+                reply = "i can't talk rn"
             await message.channel.send(reply)
 
     await bot.process_commands(message)
