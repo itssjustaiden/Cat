@@ -108,6 +108,7 @@ embed2 = discord.Embed(title="MEOW - Page 2", description="more commands:", colo
 embed2.add_field(name="$joke", value="gets a random joke", inline=False)
 embed2.add_field(name="$ship <user1> <user2>", value="ships user and user!", inline=False)
 embed2.add_field(name="$ToD", value="play truth or dare", inline=False)
+embed2.add_field(name="$compliment <user> ", value="compliment someone", inline=False)
 help_pages.append(embed2)
 
 class HelpView(View):
@@ -406,6 +407,22 @@ class ToDView(View):
     @discord.ui.button(label="Stop", style=discord.ButtonStyle.danger)
     async def stop_button(self, interaction: discord.Interaction, button: Button):
         await interaction.message.delete()
+@bot.command()
+async def compliment(ctx, member: discord.Member = None):
+    member = member or ctx.author
+    url = "https://raw.githubusercontent.com/itssjustaiden/SomethingThatsNotCheats/main/Compliments.txt"
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as resp:
+                text = await resp.text()
+        lines = [line.strip() for line in text.split("\n") if line.strip()]
+        if not lines:
+            await ctx.send("no compliments available rn.")
+            return
+        choice = random.choice(lines)
+        await ctx.send(f"{member.mention}, {choice}")
+    except:
+        await ctx.send("can't fetch a compliment rn, try again later.")
 
 @bot.command()
 async def ToD(ctx):
