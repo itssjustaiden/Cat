@@ -162,7 +162,7 @@ async def Gambling1(ctx):
 
 @bot.command()
 async def joke(ctx):
-    url = "https://v2.jokeapi.dev/joke/Any"
+    url = "https://v2.jokeapi.dev/joke/Any?blacklistFlags=nsfw,racist,sexist,explicit"
     try:
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as resp:
