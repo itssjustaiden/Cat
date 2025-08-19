@@ -32,11 +32,38 @@ bot.remove_command("help")
 
 kitty_active = False
 Allowed_Users = [1343941910309634078, 1276629095077249077]
+THREAD_ID = 1407466187377348750
+cat_quotes = [
+    "meow",
+    "myaww",
+    "hisss",
+    "nyaa~",
+    "mrroww",
+    "purrrrrrrrrrrrr",
+    "mreow, feed me rn",
+    "zzz time...",
+    "gimme treats",
+    "*yawns*",
+    "*knocks stuff*"
+]
+async def cat_spam():
+    await bot.wait_until_ready()
+    thread = bot.get_channel(THREAD_ID)
+    if not thread:
+        print("[warn] couldn’t find the thread")
+        return
+    while True:
+        msg = random.choice(cat_quotes)
+        await thread.send(msg)
+        wait_time = random.randint(1, 10) * 60
+        await asyncio.sleep(wait_time)
 
 @bot.event
 async def on_ready():
     print(f"Logged in as {bot.user}")
-    
+    bot.loop.create_task(cat_spam())
+
+
 @bot.event
 async def on_message(message):
     if message.author.bot:
