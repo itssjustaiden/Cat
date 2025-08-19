@@ -7,6 +7,7 @@ import datetime
 import requests
 import aiohttp
 import discord
+from discord.ext import tasks
 from discord.ext import commands
 from discord.ui import View, Button
 from flask import Flask
@@ -38,7 +39,7 @@ THREAD_ID = 1407466187377348750
 @bot.event
 async def on_ready():
     print(f"Logged in as {bot.user}")
-    spam_cats.start
+    spam_cats.start()
 
 @tasks.loop(minutes=2.5)
 async def spam_cats():
