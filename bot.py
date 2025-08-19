@@ -108,7 +108,8 @@ embed2 = discord.Embed(title="MEOW - Page 2", description="more commands:", colo
 embed2.add_field(name="$joke", value="gets a random joke", inline=False)
 embed2.add_field(name="$ship <user1> <user2>", value="ships user and user!", inline=False)
 embed2.add_field(name="$ToD", value="play truth or dare", inline=False)
-embed2.add_field(name="$compliment <user> ", value="compliment someone", inline=False)
+embed2.add_field(name="$compliment <user>", value="compliment someone", inline=False)
+embed2.add_field(name="$catfact", value="gives you a random cat fact", inline=False)
 help_pages.append(embed2)
 
 class HelpView(View):
