@@ -36,19 +36,10 @@ kitty_active = False
 Allowed_Users = [1343941910309634078, 1276629095077249077]
 
 CAT_MESSAGES = ["meow", "zzz time", "purr", "hiss", "mraw"]
-THREAD_ID = 1407466187377348750
+THREAD_ID = 1407466187377348750  
+CARSH_CHANNEL_ID = 1400123331335688332
 DATA_FILE = "carsh_data.json"
 STEAL_FILE = "steal_data.json"
-
-def load_steal():
-    if not os.path.exists(STEAL_FILE):
-        return {}
-    with open(STEAL_FILE, "r") as f:
-        return json.load(f)
-
-def save_steal(data):
-    with open(STEAL_FILE, "w") as f:
-        json.dump(data, f, indent=4)
 
 def load_data():
     if not os.path.exists(DATA_FILE):
@@ -58,6 +49,16 @@ def load_data():
 
 def save_data(data):
     with open(DATA_FILE, "w") as f:
+        json.dump(data, f, indent=4)
+
+def load_steal():
+    if not os.path.exists(STEAL_FILE):
+        return {}
+    with open(STEAL_FILE, "r") as f:
+        return json.load(f)
+
+def save_steal(data):
+    with open(STEAL_FILE, "w") as f:
         json.dump(data, f, indent=4)
 
 def get_balance(user_id):
@@ -70,8 +71,11 @@ def set_balance(user_id, amount):
 
 def change_balance(user_id, amount):
     bal = get_balance(user_id) + amount
-    set_balance(user_id, max(bal, 0))
+    set_balance(user_id, max(bal,0))
     return bal
+
+def channel_check(ctx):
+    return ctx.channel.id == CARSH_CHANNEL_ID
 
 @bot.event
 async def on_ready():
@@ -79,52 +83,22 @@ async def on_ready():
     spam_cats.start()
 
 @bot.command()
-async def Steal(ctx):
-    user_id = str(ctx.author.id)
-    steal_data = load_steal()
-    now = int(time.time())
-
-    last_steal = steal_data.get(user_id, 0)
-    if now - last_steal < 86400:  # 24h cooldown
-        remaining = 86400 - (now - last_steal)
-        hrs = remaining // 3600
-        mins = (remaining % 3600) // 60
-        secs = remaining % 60
-        await ctx.send(f"You can steal again in {hrs}h {mins}m {secs}s")
-        return
-
-    amount = random.randint(5, 20)
-    change_balance(ctx.author.id, amount)
-    steal_data[user_id] = now
-    save_steal(steal_data)
-    await ctx.send(f"{ctx.author.mention} stole {amount} Carsh from the bank!")
-
-@bot.command()
-async def Leaderboard(ctx):
-    data = load_data()
-    if not data:
-        await ctx.send("No one has Carsh yet.")
-        return
-
-    sorted_data = sorted(data.items(), key=lambda x: x[1], reverse=True)
-    embed = discord.Embed(title="Carsh Leaderboard", color=discord.Color.purple())
-    for i, (uid, bal) in enumerate(sorted_data[:10], start=1):
-        user = ctx.guild.get_member(int(uid))
-        name = user.name if user else f"User {uid}"
-        embed.add_field(name=f"{i}. {name}", value=f"{bal} Carsh", inline=False)
-    await ctx.send(embed=embed)
-@bot.command()
 async def TotalCarsh(ctx, user: discord.Member = None):
+    if not channel_check(ctx):
+        return
     user = user or ctx.author
     bal = get_balance(user.id)
     await ctx.send(f"{user.name} has {bal} Carsh")
-    
+
 @bot.command()
 async def Gamble(ctx, amount: int):
-    if amount <= 0 or get_balance(ctx.author.id) < amount:
-        await ctx.send("invalid amount")
+    if not channel_check(ctx):
         return
-    if random.choice([True, False]):
+    if amount <=0 or get_balance(ctx.author.id) < amount:
+        await ctx.send("invalid amount or not enough Carsh")
+        return
+    win = random.choice([True, False])
+    if win:
         change_balance(ctx.author.id, amount)
         await ctx.send(f"{ctx.author.mention} won +{amount} Carsh")
     else:
@@ -133,29 +107,66 @@ async def Gamble(ctx, amount: int):
 
 @bot.command()
 async def Plinko(ctx, amount: int):
-    if amount <= 0 or get_balance(ctx.author.id) < amount:
+    if not channel_check(ctx):
+        return
+    if amount <=0 or get_balance(ctx.author.id) < amount:
         await ctx.send("invalid amount or not enough Carsh")
         return
 
-    # slots and their rarities (higher = rarer)
-    board_template = ["100", "50", "10", "5", "2", "0.7", "0.5", "0.2", "0.5", "0.7", "2", "5", "10", "50", "100"]
-    weights = [0.5, 2, 10, 20, 30, 50, 60, 80, 60, 50, 30, 20, 10, 2, 0.5]  # percentages, sum irrelevant for random.choices
+    board_template = ["100","50","10","5","2","0.7","0.5","0.2","0.5","0.7","2","5","10","50","100"]
+    weights = [0.5,2,10,20,30,50,60,80,60,50,30,20,10,2,0.5]
 
     ball_index = random.choices(range(len(board_template)), weights=weights, k=1)[0]
-
-    # visualize board
-    visual = " | ".join(f"[{slot}]" if idx == ball_index else slot for idx, slot in enumerate(board_template))
-
+    visual = " | ".join(f"[{slot}]" if idx==ball_index else slot for idx, slot in enumerate(board_template))
     multi = float(board_template[ball_index])
-    winnings = int(amount * multi)
+    winnings = int(amount*multi)
     change_balance(ctx.author.id, -amount)
     change_balance(ctx.author.id, winnings)
 
     await ctx.send(f"{ctx.author.mention} played Plinko with {amount} Carsh\nFinal board:\n{visual}\nYou got {winnings} Carsh (x{multi})")
 
 @bot.command()
+async def Steal(ctx):
+    if not channel_check(ctx):
+        return
+    user_id = str(ctx.author.id)
+    steal_data = load_steal()
+    now = int(time.time())
+    last = steal_data.get(user_id,0)
+    if now - last < 86400:
+        remaining = 86400 - (now-last)
+        hrs = remaining//3600
+        mins = (remaining%3600)//60
+        secs = remaining%60
+        await ctx.send(f"Steal available in {hrs}h {mins}m {secs}s")
+        return
+    amount = random.randint(5,20)
+    change_balance(ctx.author.id, amount)
+    steal_data[user_id] = now
+    save_steal(steal_data)
+    await ctx.send(f"{ctx.author.mention} stole {amount} Carsh from the bank!")
+
+@bot.command()
+async def Leaderboard(ctx):
+    if not channel_check(ctx):
+        return
+    data = load_data()
+    if not data:
+        await ctx.send("No one has Carsh yet")
+        return
+    sorted_data = sorted(data.items(), key=lambda x:x[1], reverse=True)
+    embed = discord.Embed(title="Carsh Leaderboard", color=discord.Color.purple())
+    for i,(uid,bal) in enumerate(sorted_data[:10], start=1):
+        user = ctx.guild.get_member(int(uid))
+        name = user.name if user else f"User {uid}"
+        embed.add_field(name=f"{i}. {name}", value=f"{bal} Carsh", inline=False)
+    await ctx.send(embed=embed)
+
+@bot.command()
 async def Ask(ctx, user: discord.Member, amount: int):
-    if user.id == ctx.author.id or amount <= 0:
+    if not channel_check(ctx):
+        return
+    if user.id==ctx.author.id or amount<=0:
         await ctx.send("invalid request")
         return
     if get_balance(user.id) < amount:
@@ -167,7 +178,7 @@ async def Ask(ctx, user: discord.Member, amount: int):
             super().__init__(timeout=500)
         @discord.ui.button(label="✅", style=discord.ButtonStyle.success)
         async def give(self, interaction: discord.Interaction, button: Button):
-            if interaction.user.id != user.id:
+            if interaction.user.id!=user.id:
                 await interaction.response.send_message("not your button", ephemeral=True)
                 return
             change_balance(user.id, -amount)
@@ -175,12 +186,11 @@ async def Ask(ctx, user: discord.Member, amount: int):
             await interaction.response.edit_message(embed=discord.Embed(title="Transfer Complete", description=f"{user.mention} gave {ctx.author.mention} {amount} Carsh", color=discord.Color.green()), view=None)
         @discord.ui.button(label="❌", style=discord.ButtonStyle.danger)
         async def decline(self, interaction: discord.Interaction, button: Button):
-            if interaction.user.id != user.id:
+            if interaction.user.id!=user.id:
                 await interaction.response.send_message("not your button", ephemeral=True)
                 return
             await interaction.response.edit_message(embed=discord.Embed(title="Request Declined", description=f"{user.mention} declined {ctx.author.mention}'s request", color=discord.Color.red()), view=None)
     await ctx.send(embed=embed, view=AskView())
-
 @bot.command()
 async def GiveMoney(ctx, user: str, amount: int):
     if ctx.author.id not in Allowed_Users:
