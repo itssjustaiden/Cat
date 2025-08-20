@@ -623,6 +623,16 @@ async def eightball(ctx, *, question: str):
     )
     await ctx.send(embed=eightballbed)
 
+@bot.command()
+async def HelpCarsh(ctx):
+    CarshEmbed = discord.Embed(title="Carsh Commands", color=discord.Color.purple())
+    CarshEmbed.add_field(name="$TotalCarsh", value="Shows your current Carsh balance", inline=False)
+    CarshEmbed.add_field(name="$Gamble <amount>", value="50/50 chance to win or lose Carsh", inline=False)
+    CarshEmbed.add_field(name="$Plinko <amount>", value="Try your luck with Plinko multipliers", inline=False)
+    CarshEmbed.add_field(name="$Ask <user> <amount>", value="Ask someone for Carsh", inline=False)
+    await ctx.send(embed=CarshEmbed)
+
+
 # ---- Meow! ---- #
 token = os.getenv("BOT_TOKEN")
 if not token:
