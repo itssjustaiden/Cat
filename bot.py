@@ -37,137 +37,11 @@ Allowed_Users = [1343941910309634078, 1276629095077249077]
 
 CAT_MESSAGES = ["meow", "zzz time", "purr", "hiss", "mraw"]
 THREAD_ID = 1407466187377348750
-DATA_FILE = "carsh_data.json"
-def load_data():
-    if not os.path.exists(DATA_FILE):
-        return {}
-    with open(DATA_FILE, "r") as f:
-        return json.load(f)
-def save_data(data):
-    with open(DATA_FILE, "w") as f:
-        json.dump(data, f, indent=4)
-def get_balance(user_id):
-    data = load_data()
-    return data.get(str(user_id), 0)
-def set_balance(user_id, amount):
-    data = load_data()
-    data[str(user_id)] = amount
-    save_data(data)
-def change_balance(user_id, amount):
-    bal = get_balance(user_id) + amount
-    set_balance(user_id, max(bal, 0))
-    return bal
 
 @bot.event
 async def on_ready():
     print(f"Logged in as {bot.user}")
     spam_cats.start()
-
-@bot.command()
-async def TotalCarsh(ctx):
-    bal = get_balance(ctx.author.id)
-    await ctx.send(f"{ctx.author.mention} has {bal} Carsh")
-
-@bot.command()
-async def Gamble(ctx, amount: int):
-    if amount <= 0:
-        await ctx.send("invalid amount")
-        return
-    if get_balance(ctx.author.id) < amount:
-        await ctx.send("not enough Carsh")
-        return
-    if random.choice([True, False]):
-        change_balance(ctx.author.id, amount)
-        await ctx.send(f"{ctx.author.mention} won +{amount} Carsh")
-    else:
-        change_balance(ctx.author.id, -amount)
-        await ctx.send(f"{ctx.author.mention} lost -{amount} Carsh")
-        
-@bot.command()
-async def Plinko(ctx, amount: int):
-    if amount <= 0:
-        await ctx.send("invalid amount")
-        return
-    if get_balance(ctx.author.id) < amount:
-        await ctx.send("not enough Carsh")
-        return
-    multipliers = [5, 2, 1.5, 0.5, 0.2, 0, 0.2, 0.5, 1.5, 2, 5]
-    multi = random.choice(multipliers)
-    winnings = int(amount * multi)
-    change_balance(ctx.author.id, -amount)
-    change_balance(ctx.author.id, winnings)
-    await ctx.send(f"{ctx.author.mention} played Plinko with {amount} Carsh and got {winnings} Carsh (x{multi})")
-
-@bot.command()
-async def Ask(ctx, user: discord.Member, amount: int):
-    if user.id == ctx.author.id:
-        await ctx.send("cannot ask yourself")
-        return
-    asker_bal = get_balance(ctx.author.id)
-    target_bal = get_balance(user.id)
-    if amount <= 0:
-        await ctx.send("invalid amount")
-        return
-    if target_bal < amount:
-        await ctx.send(f"{user.mention} does not have enough Carsh")
-        return
-    embed = discord.Embed(
-        title="Someone is asking for Carsh",
-        description=f"{ctx.author.mention} is asking {user.mention} for {amount} Carsh",
-        color=discord.Color.purple()
-    )
-    class AskView(View):
-        def __init__(self):
-            super().__init__(timeout=500)
-        @discord.ui.button(label="✅", style=discord.ButtonStyle.success)
-        async def give_button(self, interaction: discord.Interaction, button: Button):
-            if interaction.user.id != user.id:
-                await interaction.response.send_message("not your button", ephemeral=True)
-                return
-            nonlocal asker_bal, target_bal
-            target_bal -= amount
-            asker_bal += amount
-            set_balance(ctx.author.id, asker_bal)
-            set_balance(user.id, target_bal)
-            await interaction.response.edit_message(
-                embed=discord.Embed(
-                    title="Transfer Complete",
-                    description=f"{user.mention} gave {ctx.author.mention} {amount} Carsh",
-                    color=discord.Color.green()
-                ),
-                view=None
-            )
-        @discord.ui.button(label="❌", style=discord.ButtonStyle.danger)
-        async def decline_button(self, interaction: discord.Interaction, button: Button):
-            if interaction.user.id != user.id:
-                await interaction.response.send_message("not your button", ephemeral=True)
-                return
-            await interaction.response.edit_message(
-                embed=discord.Embed(
-                    title="Request Declined",
-                    description=f"{user.mention} declined {ctx.author.mention}'s request",
-                    color=discord.Color.red()
-                ),
-                view=None
-            )
-    await ctx.send(embed=embed, view=AskView())
-
-
-@bot.command()
-async def GiveMoney(ctx, user: discord.Member, amount: int):
-    if ctx.author.id not in Allowed_Users:
-        await ctx.send("not allowed")
-        return
-    change_balance(user.id, amount)
-    await ctx.send(f"gave {user.mention} {amount} Carsh")
-
-@bot.command()
-async def TakeMoney(ctx, user: discord.Member, amount: int):
-    if ctx.author.id not in Allowed_Users:
-        await ctx.send("not allowed")
-        return
-    change_balance(user.id, -amount)
-    await ctx.send(f"took {amount} Carsh from {user.mention}")
 
 @tasks.loop(minutes=1)
 async def spam_cats():
@@ -656,16 +530,131 @@ async def eightball(ctx, *, question: str):
         color=discord.Color.purple()
     )
     await ctx.send(embed=eightballbed)
+DATA_FILE = "carsh_data.json"
+
+def load_data():
+    if not os.path.exists(DATA_FILE):
+        return {}
+    with open(DATA_FILE, "r") as f:
+        return json.load(f)
+
+def save_data(data):
+    with open(DATA_FILE, "w") as f:
+        json.dump(data, f, indent=4)
+
+def get_balance(user_id):
+    data = load_data()
+    return data.get(str(user_id), 0)
+
+def set_balance(user_id, amount):
+    data = load_data()
+    data[str(user_id)] = amount
+    save_data(data)
+
+def change_balance(user_id, amount):
+    bal = get_balance(user_id) + amount
+    set_balance(user_id, max(bal, 0))
+    return bal
+
+@bot.command()
+async def GiveMoney(ctx, user: discord.Member, amount: int):
+    if ctx.author.id not in Allowed_Users:
+        await ctx.send("not allowed")
+        return
+    if amount <= 0:
+        await ctx.send("invalid amount")
+        return
+    change_balance(user.id, amount)
+    await ctx.send(f"Gave {user.mention} {amount} Carsh")
+
+@bot.command()
+async def TakeMoney(ctx, user: discord.Member, amount: int):
+    if ctx.author.id not in Allowed_Users:
+        await ctx.send("not allowed")
+        return
+    if amount <= 0:
+        await ctx.send("invalid amount")
+        return
+    change_balance(user.id, -amount)
+    await ctx.send(f"Took {amount} Carsh from {user.mention}")
+
+@bot.command()
+async def TotalCarsh(ctx):
+    bal = get_balance(ctx.author.id)
+    await ctx.send(f"{ctx.author.mention} has {bal} Carsh")
+
+@bot.command()
+async def Gamble(ctx, amount: int):
+    if amount <= 0 or get_balance(ctx.author.id) < amount:
+        await ctx.send("invalid amount or not enough Carsh")
+        return
+    if random.choice([True, False]):
+        change_balance(ctx.author.id, amount)
+        await ctx.send(f"{ctx.author.mention} won +{amount} Carsh")
+    else:
+        change_balance(ctx.author.id, -amount)
+        await ctx.send(f"{ctx.author.mention} lost -{amount} Carsh")
+
+@bot.command()
+async def Plinko(ctx, amount: int):
+    if amount <= 0 or get_balance(ctx.author.id) < amount:
+        await ctx.send("invalid amount or not enough Carsh")
+        return
+    multipliers = [5, 2, 1.5, 0.5, 0.2, 0.5, 1.5, 2, 5]
+    multi = random.choice(multipliers)
+    winnings = int(amount * multi)
+    change_balance(ctx.author.id, -amount)
+    change_balance(ctx.author.id, winnings)
+    await ctx.send(f"{ctx.author.mention} played Plinko with {amount} Carsh and got {winnings} Carsh (x{multi})")
+
+@bot.command()
+async def Ask(ctx, user: discord.Member, amount: int):
+    if user.id == ctx.author.id or amount <= 0:
+        await ctx.send("invalid request")
+        return
+    if get_balance(user.id) < amount:
+        await ctx.send(f"{user.mention} does not have enough Carsh")
+        return
+    embed = discord.Embed(title="Someone is asking for Carsh",
+                          description=f"{ctx.author.mention} is asking {user.mention} for {amount} Carsh",
+                          color=discord.Color.purple())
+
+    class AskView(View):
+        def __init__(self):
+            super().__init__(timeout=500)
+
+        @discord.ui.button(label="✅", style=discord.ButtonStyle.success)
+        async def give_button(self, interaction: discord.Interaction, button: Button):
+            if interaction.user.id != user.id:
+                await interaction.response.send_message("not your button", ephemeral=True)
+                return
+            change_balance(ctx.author.id, amount)
+            change_balance(user.id, -amount)
+            await interaction.response.edit_message(
+                embed=discord.Embed(title="Transfer Complete",
+                                    description=f"{user.mention} gave {ctx.author.mention} {amount} Carsh",
+                                    color=discord.Color.green()), view=None)
+
+        @discord.ui.button(label="❌", style=discord.ButtonStyle.danger)
+        async def decline_button(self, interaction: discord.Interaction, button: Button):
+            if interaction.user.id != user.id:
+                await interaction.response.send_message("not your button", ephemeral=True)
+                return
+            await interaction.response.edit_message(
+                embed=discord.Embed(title="Request Declined",
+                                    description=f"{user.mention} declined {ctx.author.mention}'s request",
+                                    color=discord.Color.red()), view=None)
+
+    await ctx.send(embed=embed, view=AskView())
 
 @bot.command()
 async def HelpCarsh(ctx):
     CarshEmbed = discord.Embed(title="Carsh Commands", color=discord.Color.purple())
-    CarshEmbed.add_field(name="$TotalCarsh", value="Shows your Carsh balance", inline=False)
-    CarshEmbed.add_field(name="$Gamble <amount>", value="50/50 chance to win or lose the amount of Carsh", inline=False)
-    CarshEmbed.add_field(name="$Ask <user> <amount>", value="Ask another user for Carsh", inline=False)
-    CarshEmbed.add_field(name="$Plinko <amount>", value="Play Plinko", inline=False)
+    CarshEmbed.add_field(name="$TotalCarsh", value="Shows your current Carsh balance", inline=False)
+    CarshEmbed.add_field(name="$Gamble <amount>", value="50/50 chance to win or lose Carsh", inline=False)
+    CarshEmbed.add_field(name="$Plinko <amount>", value="Try your luck with Plinko multipliers", inline=False)
+    CarshEmbed.add_field(name="$Ask <user> <amount>", value="Ask someone for Carsh", inline=False)
     await ctx.send(embed=CarshEmbed)
-
 # ---- Meow! ---- #
 token = os.getenv("BOT_TOKEN")
 if not token:
