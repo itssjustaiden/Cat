@@ -105,45 +105,52 @@ async def Gamble(ctx, amount: int):
         change_balance(ctx.author.id, -amount)
         await ctx.send(f"{ctx.author.mention} lost -{amount} Carsh")
 
-
 @bot.command()
 async def Plinko(ctx, amount: int):
-    if not channel_check(ctx):
-        return
-    if amount <=0 or get_balance(ctx.author.id) < amount:
+    if amount <= 0 or get_balance(ctx.author.id) < amount:
         await ctx.send("invalid amount or not enough Carsh")
         return
 
-    board_template = ["100","50","10","5","2","0.7","0.5","0.2","0.5","0.7","2","5","10","50","100"]
-    rows = 7  # number of rows before reaching bottom
-    ball_index = len(board_template)//2  # start in middle
+    slots = ["100","50","10","5","2","0.7","0.5","0.2","0.5","0.7","2","5","10","50","100"]
+    weights = [0.5,2,10,20,30,50,60,80,60,50,30,20,10,2,0.5]
+
+    rows = 10
+    ball_pos = len(slots)//2  # start roughly in the middle
+
     message = await ctx.send("Plinko dropping...")
 
-    for r in range(rows):
-        # random left/straight/right move
-        move = random.choices([-1,0,1], weights=[30,40,30])[0]
-        ball_index = max(0, min(len(board_template)-1, ball_index+move))
+    for row in range(rows):
+        move = random.choices([-1, 0, 1], weights=[30,40,30])[0]
+        ball_pos = max(0, min(len(slots)-1, ball_pos + move))
 
-        visual_rows = []
-        for i in range(rows):
-            offset = "   " if i%2 else ""
-            row = " • ".join("•" for _ in board_template)
-            if i == r:
-                row_list = row.split(" • ")
-                row_list[ball_index] = "🏀"
-                row = " • ".join(row_list)
-            visual_rows.append(offset + row)
-        visual = "\n".join(visual_rows)
+        # build pyramid visual
+        visual = ""
+        for r in range(row+1):
+            indent = " " * (rows - r)
+            row_visual = ""
+            for c in range(r*2+1):
+                # place ball at current row
+                if r == row and c == row:
+                    row_visual += "🏀 "
+                else:
+                    row_visual += "• "
+            visual += indent + row_visual.strip() + "\n"
+
+        # add bottom slots only on last row
+        if row == rows-1:
+            visual += " ".join(slots)
+
         await message.edit(content=f"Plinko dropping...\n{visual}")
-        await asyncio.sleep(0.7)
+        await asyncio.sleep(0.5)
 
-    # final multiplier
-    multi = float(board_template[ball_index])
-    winnings = int(amount*multi)
+    multi = float(slots[ball_pos])
+    winnings = int(amount * multi)
     change_balance(ctx.author.id, -amount)
     change_balance(ctx.author.id, winnings)
-    await message.edit(content=f"{ctx.author.mention} played Plinko with {amount} Carsh\nFinal board:\n{visual}\nYou got {winnings} Carsh (x{multi})")
-    
+
+    await message.edit(content=f"{ctx.author.mention} played Plinko with {amount} Carsh\nFinal slot: {slots[ball_pos]}x\nYou won {winnings} Carsh (x{multi})")
+
+
 @bot.command()
 async def Steal(ctx):
     if not channel_check(ctx):
