@@ -83,6 +83,39 @@ async def on_ready():
     spam_cats.start()
 
 @bot.command()
+async def slots(ctx, amount: int):
+    if not await channel_check(ctx):
+        return
+
+    if amount <= 0:
+        await ctx.send("bet a real amount pls")
+        return
+
+    bal = get_balance(ctx.author.id)
+    if bal < amount:
+        await ctx.send("u broke cuh, get sum Carsh")
+        return
+
+    symbols = ["🍒", "🍊", "🍎", "🍇", "💎"]
+    weights = [50, 44, 10, 5, 1]
+    payouts = {"🍒": 2, "🍊": 5, "🍎": 10, "🍇": 25, "💎": 50}
+
+    spin = random.choices(symbols, weights=weights, k=3)
+    result = " | ".join(spin)
+
+    payout = 0
+    if spin[0] == spin[1] == spin[2]:
+        payout = amount * payouts.get(spin[0], 0)
+
+    change_balance(ctx.author.id, -amount)
+    if payout > 0:
+        change_balance(ctx.author.id, payout)
+        await ctx.send(f"{ctx.author.mention} rolled 🎰 {result} 🎰 and WON {payout} Carsh")
+    else:
+        await ctx.send(f"{ctx.author.mention} rolled 🎰 {result} 🎰 and LOST {amount} Carsh")
+
+
+@bot.command()
 async def total(ctx, user: discord.Member = None):
     if not channel_check(ctx):
         return
