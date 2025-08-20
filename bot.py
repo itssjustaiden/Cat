@@ -262,14 +262,6 @@ class HelpView(View):
         self.current_page = (self.current_page + 1) % len(help_pages)
         await self.update_message(interaction)
 
-@bot.command()
-async def HelpCarsh(ctx):
-    CarshEmbed = discord.Embed(title="Carsh Commands", color=discord.Color.purple())
-    CarshEmbed.add_field(name="$TotalCarsh", value="Shows your Carsh balance", inline=False)
-    CarshEmbed.add_field(name="$Gamble <amount>", value="50/50 chance to win or lose the amount of Carsh", inline=False)
-    CarshEmbed.add_field(name="$Ask <user> <amount>", value="Ask another user for Carsh", inline=False)
-    CarshEmbed.add_field(name="$Plinko <amount>", value="Play Plinko", inline=False)
-    await ctx.send(embed=CarshEmbed)
 
 
 @bot.command()
@@ -664,6 +656,16 @@ async def eightball(ctx, *, question: str):
         color=discord.Color.purple()
     )
     await ctx.send(embed=eightballbed)
+
+@bot.command()
+async def HelpCarsh(ctx):
+    CarshEmbed = discord.Embed(title="Carsh Commands", color=discord.Color.purple())
+    CarshEmbed.add_field(name="$TotalCarsh", value="Shows your Carsh balance", inline=False)
+    CarshEmbed.add_field(name="$Gamble <amount>", value="50/50 chance to win or lose the amount of Carsh", inline=False)
+    CarshEmbed.add_field(name="$Ask <user> <amount>", value="Ask another user for Carsh", inline=False)
+    CarshEmbed.add_field(name="$Plinko <amount>", value="Play Plinko", inline=False)
+    await ctx.send(embed=CarshEmbed)
+
 # ---- Meow! ---- #
 token = os.getenv("BOT_TOKEN")
 if not token:
