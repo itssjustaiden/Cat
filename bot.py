@@ -83,7 +83,7 @@ async def on_ready():
     spam_cats.start()
 
 @bot.command()
-async def TotalCarsh(ctx, user: discord.Member = None):
+async def total(ctx, user: discord.Member = None):
     if not channel_check(ctx):
         return
     user = user or ctx.author
@@ -91,7 +91,7 @@ async def TotalCarsh(ctx, user: discord.Member = None):
     await ctx.send(f"{user.name} has {bal} Carsh")
 
 @bot.command()
-async def Gamble(ctx, amount: int):
+async def gamble(ctx, amount: int):
     if not channel_check(ctx):
         return
     if amount <=0 or get_balance(ctx.author.id) < amount:
@@ -106,7 +106,7 @@ async def Gamble(ctx, amount: int):
         await ctx.send(f"{ctx.author.mention} lost -{amount} Carsh")
 
 @bot.command()
-async def Plinko(ctx, amount: int):
+async def plinko(ctx, amount: int):
     if not channel_check(ctx):
         return
     if amount <=0 or get_balance(ctx.author.id) < amount:
@@ -127,7 +127,7 @@ async def Plinko(ctx, amount: int):
 
 
 @bot.command()
-async def Steal(ctx):
+async def steal(ctx):
     if not channel_check(ctx):
         return
     user_id = str(ctx.author.id)
@@ -148,7 +148,7 @@ async def Steal(ctx):
     await ctx.send(f"{ctx.author.mention} stole {amount} Carsh from the bank!")
 
 @bot.command()
-async def Leaderboard(ctx):
+async def lboard(ctx):
     if not channel_check(ctx):
         return
     data = load_data()
@@ -164,7 +164,7 @@ async def Leaderboard(ctx):
     await ctx.send(embed=embed)
 
 @bot.command()
-async def Ask(ctx, user: discord.Member, amount: int):
+async def ask(ctx, user: discord.Member, amount: int):
     if not channel_check(ctx):
         return
     if user.id==ctx.author.id or amount<=0:
@@ -192,8 +192,56 @@ async def Ask(ctx, user: discord.Member, amount: int):
                 return
             await interaction.response.edit_message(embed=discord.Embed(title="Request Declined", description=f"{user.mention} declined {ctx.author.mention}'s request", color=discord.Color.red()), view=None)
     await ctx.send(embed=embed, view=AskView())
+
 @bot.command()
-async def GiveMoney(ctx, user: str, amount: int):
+async def slot(ctx, amount: int):
+    if not await channel_check(ctx):
+        return
+    
+    user_id = str(ctx.author.id)
+    if user_id not in user_balances:
+        user_balances[user_id] = 100
+    
+    if amount <= 0:
+        await ctx.send("bet a valid amount")
+        return
+    
+    if user_balances[user_id] < amount:
+        await ctx.send("u broke cuh, get sum Carsh")
+        return
+    
+    
+    symbols = ["🍒", "🍊", "🍎", "🍇", "💎"]
+    weights = [50, 44, 10, 5, 1]
+    
+    spin = random.choices(symbols, weights=weights, k=3)
+    result = " | ".join(spin)
+    
+    payout = 0
+    if spin.count(spin[0]) == 3:
+        if spin[0] == "🍒":
+            payout = amount * 2
+        elif spin[0] == "🍊":
+            payout = amount * 5
+        elif spin[0] == "🍎":
+            payout = amount * 10
+        elif spin[0] == "🍇":
+            payout = amount * 25
+        elif spin[0] == "💎":
+            payout = amount * 50
+    
+    if payout > 0:
+        user_balances[user_id] += payout
+        await ctx.send(f"{ctx.author.mention} rolled 🎰 {result} 🎰 and WON {payout} Carsh (x{payout//amount})")
+    else:
+        user_balances[user_id] -= amount
+        await ctx.send(f"{ctx.author.mention} rolled 🎰 {result} 🎰 and LOST {amount} Carsh")
+    
+    save_balances()
+
+
+@bot.command()
+async def GiveM(ctx, user: str, amount: int):
     if ctx.author.id not in Allowed_Users:
         await ctx.send("not allowed")
         return
@@ -212,7 +260,7 @@ async def GiveMoney(ctx, user: str, amount: int):
     change_balance(member.id, amount)
     await ctx.send(f"Gave {member.mention} {amount} Carsh")
 @bot.command()
-async def TakeMoney(ctx, user: str, amount: int):
+async def TakeM(ctx, user: str, amount: int):
     if ctx.author.id not in Allowed_Users:
         await ctx.send("not allowed")
         return
@@ -722,12 +770,13 @@ async def eightball(ctx, *, question: str):
 @bot.command()
 async def HelpCarsh(ctx):
     CarshEmbed = discord.Embed(title="Carsh Commands", color=discord.Color.purple())
-    CarshEmbed.add_field(name="$TotalCarsh", value="Shows your current Carsh balance", inline=False)
-    CarshEmbed.add_field(name="$Gamble <amount>", value="50/50 chance to win or lose Carsh", inline=False)
-    CarshEmbed.add_field(name="$Plinko <amount>", value="Try your luck with Plinko multipliers", inline=False)
-    CarshEmbed.add_field(name="$Ask <user> <amount>", value="Ask someone for Carsh", inline=False)
-    CarshEmbed.add_field(name="$Steal", value="Get money if you have 0", inline=False)
-    CarshEmbed.add_field(name="$Leaderboard", value="Check the leaderboard", inline=False)
+    CarshEmbed.add_field(name="$total", value="Shows your current Carsh balance", inline=False)
+    CarshEmbed.add_field(name="$gamble <amount>", value="50/50 chance to win or lose Carsh", inline=False)
+    CarshEmbed.add_field(name="$plinko <amount>", value="Try your luck with Plinko", inline=False)
+    CarshEmbed.add_field(name="$ask <user> <amount>", value="Ask someone for Carsh", inline=False)
+    CarshEmbed.add_field(name="$steal", value="Get money if you have 0", inline=False)
+    CarshEmbed.add_field(name="$lboard", value="Check the leaderboard", inline=False)
+    CarshEmded.add_field(name="$slot", value="Play slot machine", inline=False)
     await ctx.send(embed=CarshEmbed)
 
 
