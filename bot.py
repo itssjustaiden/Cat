@@ -84,7 +84,7 @@ async def on_ready():
 
 @bot.command()
 async def slots(ctx, amount: int):
-    if not await channel_check(ctx):
+    if not channel_check(ctx):
         return
 
     if amount <= 0:
@@ -226,36 +226,6 @@ async def ask(ctx, user: discord.Member, amount: int):
             await interaction.response.edit_message(embed=discord.Embed(title="Request Declined", description=f"{user.mention} declined {ctx.author.mention}'s request", color=discord.Color.red()), view=None)
     await ctx.send(embed=embed, view=AskView())
 
-@bot.command()
-async def slots(ctx, amount: int):
-    if not await channel_check(ctx):
-        return
-
-    if amount <= 0:
-        await ctx.send("bet a valid amount lil bro")
-        return
-
-    if get_balance(ctx.author.id) < amount:
-        await ctx.send("u broke, not enough Carsh")
-        return
-
-    symbols = ["🍒", "🍊", "🍎", "🍇", "💎"]
-    weights = [50, 44, 10, 5, 1]
-    payouts = {"🍒": 2, "🍊": 5, "🍎": 10, "🍇": 25, "💎": 50}
-
-    spin = random.choices(symbols, weights=weights, k=3)
-    result = " | ".join(spin)
-
-    payout = 0
-    if spin.count(spin[0]) == 3:
-        payout = amount * payouts[spin[0]]
-
-    change_balance(ctx.author.id, -amount)
-    if payout > 0:
-        change_balance(ctx.author.id, payout)
-        await ctx.send(f"{ctx.author.mention} rolled 🎰 {result} 🎰 and WON {payout} Carsh")
-    else:
-        await ctx.send(f"{ctx.author.mention} rolled 🎰 {result} 🎰 and LOST {amount} Carsh")
 
 
 
@@ -366,7 +336,7 @@ embed2.add_field(name="$ToD", value="play truth or dare", inline=False)
 embed2.add_field(name="$compliment <user>", value="compliment someone", inline=False)
 embed2.add_field(name="$catfact", value="gives you a random cat fact", inline=False)
 embed2.add_field(name="$eightball <question>", value="eight ball", inline=False)
-embed2.add_field(name="$HelpCarsh", value="you can GAMBLE even more!", inline=False)
+embed2.add_field(name="$helpcarsh", value="you can GAMBLE even more!", inline=False)
 help_pages.append(embed2)
 
 class HelpView(View):
