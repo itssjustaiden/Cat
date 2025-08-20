@@ -142,7 +142,9 @@ async def Plinko(ctx, amount: int):
     winnings = int(amount*multi)
     change_balance(ctx.author.id, -amount)
     change_balance(ctx.author.id, winnings)
-    await message.edit(content=f"{ctx.author.mention} played Plinko with {amount} Carsh\nFinal board:\n{visual}\nYou got {winnings} Carsh (x{multi})")@bot.command()
+    await message.edit(content=f"{ctx.author.mention} played Plinko with {amount} Carsh\nFinal board:\n{visual}\nYou got {winnings} Carsh (x{multi})")
+    
+@bot.command()
 async def Steal(ctx):
     if not channel_check(ctx):
         return
