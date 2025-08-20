@@ -38,6 +38,17 @@ Allowed_Users = [1343941910309634078, 1276629095077249077]
 CAT_MESSAGES = ["meow", "zzz time", "purr", "hiss", "mraw"]
 THREAD_ID = 1407466187377348750
 DATA_FILE = "carsh_data.json"
+STEAL_FILE = "steal_data.json"
+
+def load_steal():
+    if not os.path.exists(STEAL_FILE):
+        return {}
+    with open(STEAL_FILE, "r") as f:
+        return json.load(f)
+
+def save_steal(data):
+    with open(STEAL_FILE, "w") as f:
+        json.dump(data, f, indent=4)
 
 def load_data():
     if not os.path.exists(DATA_FILE):
@@ -67,7 +78,41 @@ async def on_ready():
     print(f"Logged in as {bot.user}")
     spam_cats.start()
 
+@bot.command()
+async def Steal(ctx):
+    user_id = str(ctx.author.id)
+    steal_data = load_steal()
+    now = int(time.time())
 
+    last_steal = steal_data.get(user_id, 0)
+    if now - last_steal < 86400:  # 24h cooldown
+        remaining = 86400 - (now - last_steal)
+        hrs = remaining // 3600
+        mins = (remaining % 3600) // 60
+        secs = remaining % 60
+        await ctx.send(f"You can steal again in {hrs}h {mins}m {secs}s")
+        return
+
+    amount = random.randint(5, 20)
+    change_balance(ctx.author.id, amount)
+    steal_data[user_id] = now
+    save_steal(steal_data)
+    await ctx.send(f"{ctx.author.mention} stole {amount} Carsh from the bank!")
+
+@bot.command()
+async def Leaderboard(ctx):
+    data = load_data()
+    if not data:
+        await ctx.send("No one has Carsh yet.")
+        return
+
+    sorted_data = sorted(data.items(), key=lambda x: x[1], reverse=True)
+    embed = discord.Embed(title="Carsh Leaderboard", color=discord.Color.purple())
+    for i, (uid, bal) in enumerate(sorted_data[:10], start=1):
+        user = ctx.guild.get_member(int(uid))
+        name = user.name if user else f"User {uid}"
+        embed.add_field(name=f"{i}. {name}", value=f"{bal} Carsh", inline=False)
+    await ctx.send(embed=embed)
 @bot.command()
 async def TotalCarsh(ctx, user: discord.Member = None):
     user = user or ctx.author
@@ -181,7 +226,7 @@ async def TakeMoney(ctx, user: str, amount: int):
         return
     change_balance(member.id, -amount)
     await ctx.send(f"Took {amount} Carsh from {member.mention}")
-@tasks.loop(minutes=1)
+@tasks.loop(minutes=2)
 async def spam_cats():
     thread = await bot.fetch_channel(THREAD_ID)
     await thread.send(random.choice(CAT_MESSAGES))
