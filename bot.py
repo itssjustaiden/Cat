@@ -108,46 +108,23 @@ async def Gamble(ctx, amount: int):
 @bot.command()
 async def Plinko(ctx, amount: int):
     if not channel_check(ctx):
-        await ctx.send(f"you can only use this in <#{CHANNEL_ID}>")
         return
-    if amount <= 0 or get_balance(ctx.author.id) < amount:
+    if amount <=0 or get_balance(ctx.author.id) < amount:
         await ctx.send("invalid amount or not enough Carsh")
         return
 
-    # slots at the bottom with multipliers
-    board_bottom = ["100", "50", "10", "5", "2", "0.7", "0.5", "0.2", "0.5", "0.7", "2", "5", "10", "50", "100"]
-    # rarities: higher = rarer
-    weights = [0.5, 2, 10, 20, 30, 50, 60, 80, 60, 50, 30, 20, 10, 2, 0.5]
+    board_template = ["100","50","10","5","2","0.7","0.5","0.2","0.5","0.7","2","5","10","50","100"]
+    weights = [0.5,2,10,20,30,50,60,80,60,50,30,20,10,2,0.5]
 
-    rows = 10
-    ball_index = len(board_bottom) // 2  # start in the middle
-
-    message = await ctx.send("Plinko dropping...")
-    visual_rows = []
-
-    for r in range(rows):
-        move = random.choice([-1, 0, 1])
-        ball_index = max(0, min(len(board_bottom) - 1, ball_index + move))
-        row_visual = []
-        for i in range(len(board_bottom)):
-            if (i == ball_index):
-                row_visual.append("🏀")
-            else:
-                row_visual.append("•")
-        # pyramid spacing
-        if r % 2 != 0:
-            row_visual.insert(0, " ")
-        visual_rows.append(" ".join(row_visual))
-        await message.edit(content="Plinko dropping...\n" + "\n".join(visual_rows))
-        await asyncio.sleep(0.7)
-
-    # final slot multiplier
-    multi = float(board_bottom[ball_index])
-    winnings = int(amount * multi)
+    ball_index = random.choices(range(len(board_template)), weights=weights, k=1)[0]
+    visual = " | ".join(f"[{slot}]" if idx==ball_index else slot for idx, slot in enumerate(board_template))
+    multi = float(board_template[ball_index])
+    winnings = int(amount*multi)
     change_balance(ctx.author.id, -amount)
     change_balance(ctx.author.id, winnings)
 
-    await message.edit(content=f"{ctx.author.mention} played Plinko with {amount} Carsh\nFinal board:\n" + "\n".join(visual_rows) + f"\nYou got {winnings} Carsh (x{multi})")
+    await ctx.send(f"{ctx.author.mention} played Plinko with {amount} Carsh\nFinal board:\n{visual}\nYou got {winnings} Carsh (x{multi})")
+
 
 @bot.command()
 async def Steal(ctx):
