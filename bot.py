@@ -105,7 +105,7 @@ async def Gamble(ctx, amount: int):
         change_balance(ctx.author.id, -amount)
         await ctx.send(f"{ctx.author.mention} lost -{amount} Carsh")
 
-@bot.command()
+
 @bot.command()
 async def Plinko(ctx, amount: int):
     if not channel_check(ctx):
