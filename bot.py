@@ -725,6 +725,8 @@ async def HelpCarsh(ctx):
     CarshEmbed.add_field(name="$Gamble <amount>", value="50/50 chance to win or lose Carsh", inline=False)
     CarshEmbed.add_field(name="$Plinko <amount>", value="Try your luck with Plinko multipliers", inline=False)
     CarshEmbed.add_field(name="$Ask <user> <amount>", value="Ask someone for Carsh", inline=False)
+    CarshEmbed.add_field(name="$Steal", value="Get money if you have 0", inline=False)
+    CarshEmbed.add_field(name="$Leaderboard", value="Check the leaderboard", inline=False)
     await ctx.send(embed=CarshEmbed)
 
 
