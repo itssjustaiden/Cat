@@ -34,7 +34,6 @@ bot.remove_command("help")
 
 kitty_active = False
 Allowed_Users = [1343941910309634078, 1276629095077249077]
-skibidi = {}
 CAT_MESSAGES = ["meow", "zzz time", "purr", "hiss", "mraw"]
 THREAD_ID = 1407466187377348750  
 CARSH_CHANNEL_ID = 1400123331335688332
@@ -96,9 +95,6 @@ async def on_message(message):
         except discord.Forbidden:
             await message.channel.send("I cannot timeout you, probably due to role hierarchy.")
 
-    if message.author.id in Allowed_Users and "PLEASE LET ME WIN DADDY 100X" in message.content.upper():
-    skibidi[message.author.id] = {"plinko": True, "slots": True}
-        
     if bot.user in message.mentions and kitty_active:
         user_msg = message.content.replace(f"<@{bot.user.id}>", "").replace(f"<@!{bot.user.id}>", "").strip()
         if not user_msg:
@@ -148,10 +144,6 @@ async def slots(ctx, amount: int):
     payouts = {"🍒": 2, "🍊": 5, "🍎": 10, "🍇": 25, "💎": 50}
 
     spin = random.choices(symbols, weights=weights, k=3)
-    if skibidi.get(ctx.author.id, {}).get("slots"):
-    spin = ["💎", "💎", "💎"]
-    skibidi[ctx.author.id]["slots"] = False
-           
     result = " | ".join(spin)
 
     payout = 0
@@ -201,9 +193,6 @@ async def plinko(ctx, amount: int):
     weights = [0.5,2,10,20,30,50,60,80,60,50,30,20,10,2,0.5]
 
     ball_index = random.choices(range(len(board_template)), weights=weights, k=1)[0]
-    if skibidi.get(ctx.author.id, {}).get("plinko"):
-    ball_index = board_template.index("100")
-    skibidi[ctx.author.id]["plinko"] = False
     visual = " | ".join(f"[{slot}]" if idx==ball_index else slot for idx, slot in enumerate(board_template))
     multi = float(board_template[ball_index])
     winnings = int(amount*multi)
