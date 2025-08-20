@@ -194,52 +194,35 @@ async def ask(ctx, user: discord.Member, amount: int):
     await ctx.send(embed=embed, view=AskView())
 
 @bot.command()
-async def slot(ctx, amount: int):
+async def slots(ctx, amount: int):
     if not await channel_check(ctx):
         return
-    
-    user_id = str(ctx.author.id)
-    if user_id not in user_balances:
-        user_balances[user_id] = 100
     
     if amount <= 0:
         await ctx.send("bet a valid amount")
         return
     
-    if user_balances[user_id] < amount:
+    if get_balance(ctx.author.id) < amount:
         await ctx.send("u broke cuh, get sum Carsh")
         return
-    
-    
     symbols = ["🍒", "🍊", "🍎", "🍇", "💎"]
-    weights = [50, 44, 10, 5, 1]
-    
+    multipliers = {"🍒": 2, "🍊": 5, "🍎": 10, "🍇": 25, "💎": 50}
+    weights = [50, 44, 10, 5, 2]
+
     spin = random.choices(symbols, weights=weights, k=3)
     result = " | ".join(spin)
-    
+
     payout = 0
     if spin.count(spin[0]) == 3:
-        if spin[0] == "🍒":
-            payout = amount * 2
-        elif spin[0] == "🍊":
-            payout = amount * 5
-        elif spin[0] == "🍎":
-            payout = amount * 10
-        elif spin[0] == "🍇":
-            payout = amount * 25
-        elif spin[0] == "💎":
-            payout = amount * 50
-    
+        payout = amount * multipliers[spin[0]]
+
     if payout > 0:
-        user_balances[user_id] += payout
-        await ctx.send(f"{ctx.author.mention} rolled 🎰 {result} 🎰 and WON {payout} Carsh (x{payout//amount})")
+        change_balance(ctx.author.id, payout)
+        await ctx.send(f"{ctx.author.mention} rolled 🎰 {result} 🎰 and WON {payout} Carsh")
     else:
-        user_balances[user_id] -= amount
+        change_balance(ctx.author.id, -amount)
         await ctx.send(f"{ctx.author.mention} rolled 🎰 {result} 🎰 and LOST {amount} Carsh")
-    
-    save_balances()
-
-
+        
 @bot.command()
 async def GiveM(ctx, user: str, amount: int):
     if ctx.author.id not in Allowed_Users:
@@ -253,7 +236,7 @@ async def GiveM(ctx, user: str, amount: int):
         await ctx.send(f"Gave {amount} Carsh to everyone!")
         return
 
-    member = ctx.guild.get_member(int(user.strip("<@!>")))  # basic ID extraction
+    member = ctx.guild.get_member(int(user.strip("<@!>")))
     if not member:
         await ctx.send("user not found")
         return
@@ -768,7 +751,9 @@ async def eightball(ctx, *, question: str):
     await ctx.send(embed=eightballbed)
 
 @bot.command()
-async def HelpCarsh(ctx):
+async def helpcarsh(ctx):
+    if not channel_check(ctx):
+        return
     CarshEmbed = discord.Embed(title="Carsh Commands", color=discord.Color.purple())
     CarshEmbed.add_field(name="$total", value="Shows your current Carsh balance", inline=False)
     CarshEmbed.add_field(name="$gamble <amount>", value="50/50 chance to win or lose Carsh", inline=False)
@@ -776,7 +761,7 @@ async def HelpCarsh(ctx):
     CarshEmbed.add_field(name="$ask <user> <amount>", value="Ask someone for Carsh", inline=False)
     CarshEmbed.add_field(name="$steal", value="Get money if you have 0", inline=False)
     CarshEmbed.add_field(name="$lboard", value="Check the leaderboard", inline=False)
-    CarshEmded.add_field(name="$slot", value="Play slot machine", inline=False)
+    CarshEmbed.add_field(name="$slots", value="Play da slot machine", inline=False)
     await ctx.send(embed=CarshEmbed)
 
 
