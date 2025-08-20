@@ -133,32 +133,25 @@ async def Gamble(ctx, amount: int):
 
 @bot.command()
 async def Plinko(ctx, amount: int):
-    if amount <= 0:
-        await ctx.send("invalid amount")
-        return
-    if get_balance(ctx.author.id) < amount:
-        await ctx.send("not enough Carsh")
+    if amount <= 0 or get_balance(ctx.author.id) < amount:
+        await ctx.send("invalid amount or not enough Carsh")
         return
 
-    board_template = ["5", "2", "1.5", "0.5", "0.2", "0.5", "1.5", "2", "5"]
-    ball_index = len(board_template) // 2  # start in the middle
-    rows = 5
+    # slots and their rarities (higher = rarer)
+    board_template = ["100", "50", "10", "5", "2", "0.7", "0.5", "0.2", "0.5", "0.7", "2", "5", "10", "50", "100"]
+    weights = [0.5, 2, 10, 20, 30, 50, 60, 80, 60, 50, 30, 20, 10, 2, 0.5]  # percentages, sum irrelevant for random.choices
 
-    message = await ctx.send("Plinko dropping...")
-    for _ in range(rows):
-        move = random.choice([-1, 0, 1])  # ball can go left, stay, or go right
-        ball_index = max(0, min(len(board_template) - 1, ball_index + move))
-        visual = " | ".join(f"[{slot}]" if idx == ball_index else slot for idx, slot in enumerate(board_template))
-        await message.edit(content=f"Plinko dropping...\n{visual}")
-        await asyncio.sleep(0.7)
+    ball_index = random.choices(range(len(board_template)), weights=weights, k=1)[0]
+
+    # visualize board
+    visual = " | ".join(f"[{slot}]" if idx == ball_index else slot for idx, slot in enumerate(board_template))
 
     multi = float(board_template[ball_index])
     winnings = int(amount * multi)
     change_balance(ctx.author.id, -amount)
     change_balance(ctx.author.id, winnings)
 
-    await message.edit(content=f"{ctx.author.mention} played Plinko with {amount} Carsh\nFinal board:\n{visual}\nYou got {winnings} Carsh (x{multi})")
-
+    await ctx.send(f"{ctx.author.mention} played Plinko with {amount} Carsh\nFinal board:\n{visual}\nYou got {winnings} Carsh (x{multi})")
 
 @bot.command()
 async def Ask(ctx, user: discord.Member, amount: int):
