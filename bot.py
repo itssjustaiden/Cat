@@ -77,12 +77,12 @@ async def Gamble(ctx, amount: int):
         await ctx.send("not enough Carsh")
         return
     if random.choice([True, False]):
-        change_balance(ctx.author.id, 20)
-        await ctx.send(f"{ctx.author.mention} won +20 Carsh")
+        change_balance(ctx.author.id, amount)
+        await ctx.send(f"{ctx.author.mention} won +{amount} Carsh")
     else:
-        change_balance(ctx.author.id, -20)
-        await ctx.send(f"{ctx.author.mention} lost -20 Carsh")
-
+        change_balance(ctx.author.id, -amount)
+        await ctx.send(f"{ctx.author.mention} lost -{amount} Carsh")
+        
 @bot.command()
 async def Plinko(ctx, amount: int):
     if amount <= 0:
@@ -91,7 +91,7 @@ async def Plinko(ctx, amount: int):
     if get_balance(ctx.author.id) < amount:
         await ctx.send("not enough Carsh")
         return
-    multipliers = [5, 2, 1.5, 0.5, 0.2, 0.5, 1.5, 2, 5]
+    multipliers = [5, 2, 1.5, 0.5, 0.2, 0, 0.2, 0.5, 1.5, 2, 5]
     multi = random.choice(multipliers)
     winnings = int(amount * multi)
     change_balance(ctx.author.id, -amount)
