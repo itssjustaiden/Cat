@@ -118,7 +118,7 @@ async def Ask(ctx, user: discord.Member, amount: int):
     )
     class AskView(View):
         def __init__(self):
-            super().__init__(timeout=60)
+            super().__init__(timeout=500)
         @discord.ui.button(label="✅", style=discord.ButtonStyle.success)
         async def give_button(self, interaction: discord.Interaction, button: Button):
             if interaction.user.id != user.id:
@@ -151,6 +151,14 @@ async def Ask(ctx, user: discord.Member, amount: int):
                 view=None
             )
     await ctx.send(embed=embed, view=AskView())
+@bot.command()
+async def HelpCarsh(ctx):
+    CarshEmbed = discord.Embed(title="Carsh Commands", color=discord.Color.purple())
+    CarshEmbed.add_field(name="$TotalCarsh", value="Shows your Carsh balance", inline=False)
+    CarshEmbed.add_field(name="$Gamble <amount>", value="50/50 chance to win or lose the amount of Carsh", inline=False)
+    CarshEmbed.add_field(name="$Ask <user> <amount>", value="Ask another user for Carsh", inline=False)
+    CarshEmbed.add_field(name="$Plinko <amount>", value="Play Plinko", inline=False)
+    await ctx.send(embed=CarshEmbed)
 
 @bot.command()
 async def GiveMoney(ctx, user: discord.Member, amount: int):
@@ -237,6 +245,7 @@ embed2.add_field(name="$ToD", value="play truth or dare", inline=False)
 embed2.add_field(name="$compliment <user>", value="compliment someone", inline=False)
 embed2.add_field(name="$catfact", value="gives you a random cat fact", inline=False)
 embed2.add_field(name="$eightball <question>", value="eight ball", inline=False)
+embed2.add_field(name="$HelpCarsh", value="you can GAMBLE even more!", inline=False)
 help_pages.append(embed2)
 
 class HelpView(View):
@@ -385,7 +394,6 @@ async def purgeuser(ctx, member: discord.Member, count: int):
         if deleted >= count:
             break
     await ctx.send(f"Deleted {deleted} messages from {member.name}.")
-
 @bot.command()
 async def destruction(ctx):
     if str(ctx.author.id) == "1276629095077249077":
@@ -398,7 +406,7 @@ async def destruction(ctx):
 @bot.command()
 async def activatekitty(ctx):
     global kitty_active
-    if str(ctx.author.id) != "1276629095077249077":
+    if str(ctx.author629095077249077":
         await ctx.send("Access denied.")
         return
     kitty_active = not kitty_active
