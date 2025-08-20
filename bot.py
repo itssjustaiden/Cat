@@ -86,15 +86,32 @@ async def Gamble(ctx, amount: int):
 
 @bot.command()
 async def Plinko(ctx, amount: int):
-    if amount <= 0 or get_balance(ctx.author.id) < amount:
+    if amount <= 0:
         await ctx.send("invalid amount")
         return
-    multipliers = [5, 2, 1.5, 0.5, 0.2, 0.5, 1.5, 2, 5]
-    multi = random.choice(multipliers)
-    change_balance(ctx.author.id, -amount)
+    if get_balance(ctx.author.id) < amount:
+        await ctx.send("not enough Carsh")
+        return
+
+    board_template = ["5", "2", "1.5", "0.5", "0.2", "0.5", "1.5", "2", "5"]
+    ball_index = len(board_template) // 2  # start in the middle
+    rows = 5
+
+    message = await ctx.send("Plinko dropping...")
+    for _ in range(rows):
+        move = random.choice([-1, 0, 1])  # ball can go left, stay, or go right
+        ball_index = max(0, min(len(board_template) - 1, ball_index + move))
+        visual = " | ".join(f"[{slot}]" if idx == ball_index else slot for idx, slot in enumerate(board_template))
+        await message.edit(content=f"Plinko dropping...\n{visual}")
+        await asyncio.sleep(0.7)
+
+    multi = float(board_template[ball_index])
     winnings = int(amount * multi)
+    change_balance(ctx.author.id, -amount)
     change_balance(ctx.author.id, winnings)
-    await ctx.send(f"{ctx.author.mention} played Plinko {amount} Carsh -> {winnings} Carsh (x{multi})")
+
+    await message.edit(content=f"{ctx.author.mention} played Plinko with {amount} Carsh\nFinal board:\n{visual}\nYou got {winnings} Carsh (x{multi})")
+
 
 @bot.command()
 async def Ask(ctx, user: discord.Member, amount: int):
