@@ -142,15 +142,43 @@ async def Ask(ctx, user: discord.Member, amount: int):
     await ctx.send(embed=embed, view=AskView())
 
 @bot.command()
-async def GiveMoney(ctx, user: discord.Member, amount: int):
-    change_balance(user.id, amount)
-    await ctx.send(f"gave {user.mention} {amount} Carsh")
+async def GiveMoney(ctx, user: str, amount: int):
+    if ctx.author.id not in Allowed_Users:
+        await ctx.send("not allowed")
+        return
 
+    if user.lower() in ["@everyone", "@here"]:
+        for member in ctx.guild.members:
+            if not member.bot:
+                change_balance(member.id, amount)
+        await ctx.send(f"Gave {amount} Carsh to everyone!")
+        return
+
+    member = ctx.guild.get_member(int(user.strip("<@!>")))  # basic ID extraction
+    if not member:
+        await ctx.send("user not found")
+        return
+    change_balance(member.id, amount)
+    await ctx.send(f"Gave {member.mention} {amount} Carsh")
 @bot.command()
-async def TakeMoney(ctx, user: discord.Member, amount: int):
-    change_balance(user.id, -amount)
-    await ctx.send(f"took {amount} Carsh from {user.mention}")
-    
+async def TakeMoney(ctx, user: str, amount: int):
+    if ctx.author.id not in Allowed_Users:
+        await ctx.send("not allowed")
+        return
+
+    if user.lower() in ["@everyone", "@here"]:
+        for member in ctx.guild.members:
+            if not member.bot:
+                change_balance(member.id, -amount)
+        await ctx.send(f"Took {amount} Carsh from everyone!")
+        return
+
+    member = ctx.guild.get_member(int(user.strip("<@!>")))
+    if not member:
+        await ctx.send("user not found")
+        return
+    change_balance(member.id, -amount)
+    await ctx.send(f"Took {amount} Carsh from {member.mention}")
 @tasks.loop(minutes=1)
 async def spam_cats():
     thread = await bot.fetch_channel(THREAD_ID)
