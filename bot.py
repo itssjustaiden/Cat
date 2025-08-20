@@ -69,9 +69,11 @@ async def on_ready():
 
 
 @bot.command()
-async def TotalCarsh(ctx):
-    await ctx.send(f"{ctx.author.mention} has {get_balance(ctx.author.id)} Carsh")
-
+async def TotalCarsh(ctx, user: discord.Member = None):
+    user = user or ctx.author
+    bal = get_balance(user.id)
+    await ctx.send(f"{user.name} has {bal} Carsh")
+    
 @bot.command()
 async def Gamble(ctx, amount: int):
     if amount <= 0 or get_balance(ctx.author.id) < amount:
