@@ -197,32 +197,35 @@ async def ask(ctx, user: discord.Member, amount: int):
 async def slots(ctx, amount: int):
     if not await channel_check(ctx):
         return
-    
+
     if amount <= 0:
-        await ctx.send("bet a valid amount")
+        await ctx.send("bet a valid amount lil bro")
         return
-    
+
     if get_balance(ctx.author.id) < amount:
-        await ctx.send("u broke cuh, get sum Carsh")
+        await ctx.send("u broke, not enough Carsh")
         return
+
     symbols = ["🍒", "🍊", "🍎", "🍇", "💎"]
-    multipliers = {"🍒": 2, "🍊": 5, "🍎": 10, "🍇": 25, "💎": 50}
-    weights = [50, 44, 10, 5, 2]
+    weights = [50, 44, 10, 5, 1]
+    payouts = {"🍒": 2, "🍊": 5, "🍎": 10, "🍇": 25, "💎": 50}
 
     spin = random.choices(symbols, weights=weights, k=3)
     result = " | ".join(spin)
 
     payout = 0
     if spin.count(spin[0]) == 3:
-        payout = amount * multipliers[spin[0]]
+        payout = amount * payouts[spin[0]]
 
+    change_balance(ctx.author.id, -amount)
     if payout > 0:
         change_balance(ctx.author.id, payout)
         await ctx.send(f"{ctx.author.mention} rolled 🎰 {result} 🎰 and WON {payout} Carsh")
     else:
-        change_balance(ctx.author.id, -amount)
         await ctx.send(f"{ctx.author.mention} rolled 🎰 {result} 🎰 and LOST {amount} Carsh")
-        
+
+
+
 @bot.command()
 async def GiveM(ctx, user: str, amount: int):
     if ctx.author.id not in Allowed_Users:
