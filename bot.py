@@ -33,6 +33,7 @@ bot.remove_command("help")
 kitty_active = False
 Allowed_Users = [1343941910309634078, 1276629095077249077]
 CAT_MESSAGES = ["meow", "zzz time", "purrrrrr", "hiss", "mraw", "i love mommy", "snacks please"]
+Fuckasskitty = 1408088376459923496
 THREAD_ID = 1407466187377348750  
 CARSH_CHANNEL_ID = [1400123331335688332, 1406641982033498183]
 DATA_FILE = "carsh_data.json"
@@ -225,15 +226,7 @@ async def PERISH(ctx):
         exit()
     else:
         await ctx.send("fuck you")
-@bot.command()
-async def activatekitty(ctx):
-    global kitty_active
-    if ctx.author.id not in Allowed_Users:
-        await ctx.send("Access denied.")
-        return
-    kitty_active = not kitty_active
-    state = "enabled" if kitty_active else "disabled"
-    await ctx.send(f"kitty is now {state}.")
+
 perfect_matches = [("aiden", "kiara"), ("brokenspawn", "limegirl"), ("aiden", "kia")]
 @bot.command()
 async def ship(ctx, user1: str, user2: str):
@@ -496,11 +489,11 @@ async def dmuser(ctx, user_id: int, amount: int, *, message: str):
     conf_msg = await ctx.send(f"sent `{sent}` DMs to {user.name}")
     await asyncio.sleep(0.5)
     await conf_msg.delete()
+
 @bot.event
 async def on_message(message):
     if message.author.bot:
         return
-
     if "grandpa" in message.content.lower():
         await message.channel.send("sybau❌😭🙏")
         try:
@@ -509,19 +502,17 @@ async def on_message(message):
             await message.channel.send(f"{message.author.name}, never say that again.")
         except discord.Forbidden:
             await message.channel.send("I cannot timeout you, probably due to role hierarchy.")
-
-    if bot.user in message.mentions and kitty_active:
+    if message.channel.id == Fuckasskitty and bot.user in message.mentions:
         user_msg = message.content.replace(f"<@{bot.user.id}>", "").replace(f"<@!{bot.user.id}>", "").strip()
         if not user_msg:
             await message.channel.send("what’s up, why’d you ping me?")
         else:
             api_key = os.getenv("CAT_AI_KEY")
             url = "https://openrouter.ai/api/v1/chat/completions"
-            if message.author.id == 1343941910309634078:
-                personality = "You are a kawaii anime catgirl who treats everyone like senpai. Use lots of 'nya~', 'uwu', 'teehee' and princess-like speech. Do not use anything like: nya, uwu, teehe etc. You can be freaky or sexual."
-            else:
-                personality = "You are a cat-themed AI chatbot. Respond with short, concise messages. Do NOT use emojis. Do NOT flirt or be sexual/freaky. You are allowed to swear. Be casual, a little snarky, and direct. Keep responses under 20 words when possible."
-
+            personality = (
+    "You are a cat-themed AI chatbot. Respond with short, concise messages. Do NOT use emojis. Do NOT flirt or be sexual/freaky. "
+    "Use swear words ALOT. Be casual, a little snarky, and direct. Keep responses under 20 words when possible."
+)
             payload = {
                 "model": "deepseek/deepseek-r1:free",
                 "messages": [
@@ -538,6 +529,8 @@ async def on_message(message):
             await message.channel.send(reply)
 
     await bot.process_commands(message)
+
+
 
 @bot.command()
 async def helpcarsh(ctx):
