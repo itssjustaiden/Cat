@@ -879,10 +879,8 @@ async def shop(ctx):
         color=discord.Color.purple()
     )
 
-    ShopEmbed.add_field(name="itemname1", value="500 Carsh", inline=False)
-    ShopEmbed.add_field(name="luckycoin", value="1000 Carsh", inline=False)
-    ShopEmbed.add_field(name="doublesteal", value="2500 Carsh", inline=False)
-    ShopEmbed.add_field(name="activatekitty", value="5000 Carsh", inline=False)
+    for item_name, item_info in SHOP_ITEMS.items():
+        ShopEmbed.add_field(name=item_name, value=f"{item_info['price']} Carsh", inline=False)
 
     await ctx.send(embed=ShopEmbed)
 
