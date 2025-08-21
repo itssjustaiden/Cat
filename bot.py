@@ -73,6 +73,9 @@ def change_balance(user_id, amount):
     set_balance(user_id, max(bal,0))
     return bal
 
+def has_luckycoin(user_id):
+    return active_effects["luckycoin"].get(user_id,0) > int(time.time())
+    
 def channel_check(ctx):
     return ctx.channel.id in CARSH_CHANNEL_ID
 
@@ -96,36 +99,36 @@ async def on_ready():
 
 
 @bot.command()
-async def slots(ctx, amount: int):
-    if not channel_check(ctx):
-        return
+async def slots(ctx,amount:int):
+ if not channel_check(ctx):
+  return
+ if amount<=0:
+  await ctx.send("bet a real amount pls")
+  return
+ bal=get_balance(ctx.author.id)
+ if bal<amount:
+  await ctx.send("u broke cuh, get sum Carsh")
+  return
 
-    if amount <= 0:
-        await ctx.send("bet a real amount pls")
-        return
+ symbols=["🍒","🍊","🍎","🍇","💎"]
+ weights=[50,44,10,5,1]
+ payouts={"🍒":2,"🍊":5,"🍎":10,"🍇":25,"💎":50}
 
-    bal = get_balance(ctx.author.id)
-    if bal < amount:
-        await ctx.send("u broke cuh, get sum Carsh")
-        return
+ if has_luckycoin(ctx.author.id):
+  weights=[int(w*1.25) for w in weights]  # 25% boost
 
-    symbols = ["🍒", "🍊", "🍎", "🍇", "💎"]
-    weights = [50, 44, 10, 5, 1]
-    payouts = {"🍒": 2, "🍊": 5, "🍎": 10, "🍇": 25, "💎": 50}
+ spin=random.choices(symbols,weights=weights,k=3)
+ result=" | ".join(spin)
+ payout=0
+ if spin[0]==spin[1]==spin[2]:
+  payout=amount*payouts.get(spin[0],0)
 
-    spin = random.choices(symbols, weights=weights, k=3)
-    result = " | ".join(spin)
-
-    payout = 0
-    if spin[0] == spin[1] == spin[2]:
-        payout = amount * payouts.get(spin[0], 0)
-
-    change_balance(ctx.author.id, -amount)
-    if payout > 0:
-        change_balance(ctx.author.id, payout)
-        await ctx.send(f"You rolled {result} 🎰 and WON {payout} Carsh")
-    else:
-        await ctx.send(f"You rolled {result} 🎰 and LOST {amount} Carsh")
+ change_balance(ctx.author.id,-amount)
+ if payout>0:
+  change_balance(ctx.author.id,payout)
+  await ctx.send(f"You rolled {result} 🎰 and WON {payout} Carsh")
+ else:
+  await ctx.send(f"You rolled {result} 🎰 and LOST {amount} Carsh")
 
 
 @bot.command()
@@ -137,39 +140,49 @@ async def total(ctx, user: discord.Member = None):
     await ctx.send(f"{user.name} has {bal} Carsh")
 
 @bot.command()
-async def gamble(ctx, amount: int):
-    if not channel_check(ctx):
-        return
-    if amount <=0 or get_balance(ctx.author.id) < amount:
-        await ctx.send("invalid amount or not enough Carsh")
-        return
-    win = random.choice([True, False])
-    if win:
-        change_balance(ctx.author.id, amount)
-        await ctx.send(f"{ctx.author.mention} won +{amount} Carsh")
-    else:
-        change_balance(ctx.author.id, -amount)
-        await ctx.send(f"{ctx.author.mention} lost -{amount} Carsh")
+async def gamble(ctx,amount:int):
+ if not channel_check(ctx):
+  return
+ if amount<=0 or get_balance(ctx.author.id)<amount:
+  await ctx.send("invalid amount or not enough Carsh")
+  return
+
+ base_chance=0.5
+ if has_luckycoin(ctx.author.id):
+  base_chance+=0.25  # 25% boost
+
+ win=random.random() < base_chance
+
+ if win:
+  change_balance(ctx.author.id,amount)
+  await ctx.send(f"{ctx.author.mention} won +{amount} Carsh")
+ else:
+  change_balance(ctx.author.id,-amount)
+  await ctx.send(f"{ctx.author.mention} lost -{amount} Carsh")
 
 @bot.command()
-async def plinko(ctx, amount: int):
-    if not channel_check(ctx):
-        return
-    if amount <=0 or get_balance(ctx.author.id) < amount:
-        await ctx.send("invalid amount or not enough Carsh")
-        return
+async def plinko(ctx,amount:int):
+ if not channel_check(ctx):
+  return
+ if amount<=0 or get_balance(ctx.author.id)<amount:
+  await ctx.send("invalid amount or not enough Carsh")
+  return
 
-    board_template = ["100","50","10","5","2","0.7","0.5","0.2","0.5","0.7","2","5","10","50","100"]
-    weights = [0.5,2,10,20,30,50,60,80,60,50,30,20,10,2,0.5]
+ board_template=["100","50","10","5","2","0.7","0.5","0.2","0.5","0.7","2","5","10","50","100"]
+ weights=[0.5,2,10,20,30,50,60,80,60,50,30,20,10,2,0.5]
 
-    ball_index = random.choices(range(len(board_template)), weights=weights, k=1)[0]
-    visual = " | ".join(f"[{slot}]" if idx==ball_index else slot for idx, slot in enumerate(board_template))
-    multi = float(board_template[ball_index])
-    winnings = int(amount*multi)
-    change_balance(ctx.author.id, -amount)
-    change_balance(ctx.author.id, winnings)
+ if has_luckycoin(ctx.author.id):
+  weights=[w*1.25 for w in weights]  # 25% boost
 
-    await ctx.send(f"{ctx.author.mention} played Plinko with {amount} Carsh\nFinal board:\n{visual}\nYou got {winnings} Carsh (x{multi})")
+ ball_index=random.choices(range(len(board_template)),weights=weights,k=1)[0]
+ visual=" | ".join(f"[{slot}]" if idx==ball_index else slot for idx,slot in enumerate(board_template))
+ multi=float(board_template[ball_index])
+ winnings=int(amount*multi)
+ change_balance(ctx.author.id,-amount)
+ change_balance(ctx.author.id,winnings)
+
+ await ctx.send(f"{ctx.author.mention} played Plinko with {amount} Carsh\nFinal board:\n{visual}\nYou got {winnings} Carsh (x{multi})")
+
 
 @bot.command()
 async def give(ctx, member: discord.Member, amount: int):
@@ -222,6 +235,7 @@ async def give(ctx, member: discord.Member, amount: int):
             )
 
     await ctx.send(embed=embed, view=GiveView())
+    
 @bot.command()
 async def steal(ctx):
     if not channel_check(ctx):
@@ -238,10 +252,18 @@ async def steal(ctx):
         await ctx.send(f"Steal available in {hrs}h {mins}m {secs}s")
         return
     amount = random.randint(5,20)
+
+    # check for doublesteal effect
+    if user_id in active_effects["doublesteal"]:
+        effect_end = active_effects["doublesteal"][user_id]
+        if now < effect_end:
+            amount *= 2
+
     change_balance(ctx.author.id, amount)
     steal_data[user_id] = now
     save_steal(steal_data)
     await ctx.send(f"{ctx.author.mention} stole {amount} Carsh from the bank!")
+
 
 @bot.command()
 async def lboard(ctx):
@@ -861,38 +883,60 @@ async def shop(ctx):
     ShopEmbed.add_field(name="activatekitty", value="5000 Carsh", inline=False)
 
     await ctx.send(embed=ShopEmbed)
-SHOP_ITEMS = {
-    "itemname1": 500,
-    "activatekitty": 5000
+
+# Name | Amount | Seconds / None | Call-able / None
+SHOP_ITEMS={
+ "itemname1":{"price":500,"timer":None,"action":None},
+ "luckycoin":{"price":1000,"timer":3600,"action":"luckycoin"},
+ "doublesteal":{"price":2500,"timer":43200,"action":"doublesteal"},
+ "activatekitty":{"price":5000,"timer":600,"action":"kitty"},
 }
 
-@bot.command()
-async def buy(ctx, *, item_name: str):
-    if not channel_check(ctx):
-        return
-    item_name = item_name.lower()
-    if item_name not in SHOP_ITEMS:
-        await ctx.send("item not found")
-        return
+active_effects={"luckycoin":{},"doublesteal":{}}
 
-    price = SHOP_ITEMS[item_name]
-    if get_balance(ctx.author.id) < price:
-        await ctx.send("You broke cuh, get sum Carsh")
-        return
-    change_balance(ctx.author.id, -price)
-    if item_name == "activatekitty":
-        global kitty_active
-        kitty_active = True
-        await ctx.send(f"{ctx.author.mention} activated kitty mode for 10 minutes")
-        async def deactivate_kitty():
-            await asyncio.sleep(600)
-            global kitty_active
-            kitty_active = False
-            await ctx.send("kitty has expired.")
-            
-        asyncio.create_task(deactivate_kitty())
-    else:
-        await ctx.send(f"{ctx.author.mention} bought **{item_name.title()}** for {price} Carsh")
+@bot.command()
+async def buy(ctx,*,item_name:str):
+ item_name=item_name.lower()
+ if item_name not in SHOP_ITEMS:
+  await ctx.send("item not found")
+  return
+
+ item=SHOP_ITEMS[item_name]
+ price=item["price"]
+ if get_balance(ctx.author.id)<price:
+  await ctx.send("You broke cuh get sum Carsh")
+  return
+
+ change_balance(ctx.author.id,-price)
+ action=item["action"]
+ timer=item["timer"]
+
+ if action=="kitty":
+  global kitty_active
+  kitty_active=True
+  await ctx.send(f"{ctx.author.mention} activated kitty mode for {timer//60} minutes")
+
+  async def deactivate_kitty():
+   await asyncio.sleep(timer)
+   global kitty_active
+   kitty_active=False
+   await ctx.send("kitty has expired.")
+
+  asyncio.create_task(deactivate_kitty())
+
+ elif action=="luckycoin":
+  active_effects["luckycoin"][ctx.author.id]=int(time.time())+timer
+  await ctx.send(f"{ctx.author.mention} bought LuckyCoin! +10% chance in gambling for 1 hour.")
+
+ elif action=="doublesteal":
+  active_effects["doublesteal"][ctx.author.id]=int(time.time())+timer
+  await ctx.send(f"{ctx.author.mention} bought DoubleSteal! Steal bonus active for 12 hours.")
+
+ else:
+  await ctx.send(f"{ctx.author.mention} bought **{item_name.title()}** for {price} Carsh")
+
+
+
 
 @bot.command()
 async def helpcarsh(ctx):
