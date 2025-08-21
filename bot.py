@@ -892,7 +892,6 @@ SHOP_ITEMS={
  "doublesteal":{"price":2500,"timer":43200,"action":"doublesteal"},
  "activatekitty":{"price":5000,"timer":600,"action":"kitty"},
 }
-
 active_effects={"luckycoin":{},"doublesteal":{}}
 
 @bot.command()
@@ -903,22 +902,23 @@ async def buy(ctx, *, item_name: str):
         return
 
     item = SHOP_ITEMS[item_name]
-    price = item["price"]
     action = item["action"]
-    
+    timer = item["timer"]
+
+    if action == "kitty" and kitty_active:
+        await ctx.send("this kitty is already activated", ephemeral=True)
+        return
+    elif action in ["luckycoin", "doublesteal"]:
+        if ctx.author.id in active_effects[action] and active_effects[action][ctx.author.id] > int(time.time()):
+            await ctx.send(f"this {item_name} is already activated", ephemeral=True)
+            return
+
+    price = item["price"]
     if get_balance(ctx.author.id) < price:
         await ctx.send("You broke cuh get sum Carsh")
         return
 
-    if action == "kitty" and kitty_active:
-        await ctx.send(f"this {item_name} is already activated", ephemeral=True)
-        return
-    elif action in active_effects and ctx.author.id in active_effects[action] and active_effects[action][ctx.author.id] > int(time.time()):
-        await ctx.send(f"this {item_name} is already activated", ephemeral=True)
-        return
-
     change_balance(ctx.author.id, -price)
-    timer = item["timer"]
 
     if action == "kitty":
         global kitty_active
@@ -943,6 +943,7 @@ async def buy(ctx, *, item_name: str):
 
     else:
         await ctx.send(f"{ctx.author.mention} bought **{item_name.title()}** for {price} Carsh")
+
 
 
 
