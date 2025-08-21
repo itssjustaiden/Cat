@@ -36,7 +36,7 @@ kitty_active = False
 Allowed_Users = [1343941910309634078, 1276629095077249077]
 CAT_MESSAGES = ["meow", "zzz time", "purr", "hiss", "mraw"]
 THREAD_ID = 1407466187377348750  
-CARSH_CHANNEL_ID = 1400123331335688332
+CARSH_CHANNEL_ID = [1400123331335688332, 1406641982033498183]
 DATA_FILE = "carsh_data.json"
 STEAL_FILE = "steal_data.json"
 
@@ -846,24 +846,90 @@ async def on_message(message):
 
     await bot.process_commands(message)
 
+@bot.command()
+async def shop(ctx):
+    if not channel_check(ctx):
+        return
 
+    ShopEmbed = discord.Embed(
+        title="Carsh Shop",
+        description="meow",
+        color=discord.Color.purple()
+    )
+
+    ShopEmbed.add_field(name="ItemName1", value="500 Carsh", inline=False)
+    ShopEmbed.add_field(name="activatekitty", value="5000 Carsh", inline=False)
+
+    await ctx.send(embed=ShopEmbed)
+@bot.command()
+async def buy(ctx, *, item_name: str):
+    if not channel_check(ctx):
+        return
+
+    item_name = item_name.lower()
+    if item_name not in SHOP_ITEMS:
+        await ctx.send("item not found
+        return
+
+    price = SHOP_ITEMS[item_name]
+    if get_balance(ctx.author.id) < price:
+        await ctx.send("You broke cuh get sum Carsh")
+        return
+
+    change_balance(ctx.author.id, -price)
+
+    if item_name == "activatekitty":
+        global kitty_active
+        kitty_active = True
+        await ctx.send(f"{ctx.author.mention} activated kitty mode for 10 minutes")
+
+        async def deactivate_kitty():
+            await asyncio.sleep(600)
+            global kitty_active
+            kitty_active = False
+            await ctx.send("kitty has expired.")
+
+        asyncio.create_task(deactivate_kitty())
+    else:
+        await ctx.send(f"{ctx.author.mention} bought **{item_name.title()}** for {price} Carsh")
 
 @bot.command()
 async def helpcarsh(ctx):
     if not channel_check(ctx):
         return
-    CarshEmbed = discord.Embed(title="Carsh Commands", color=discord.Color.purple())
-    CarshEmbed.add_field(name="$total", value="Shows your current Carsh balance", inline=False)
-    CarshEmbed.add_field(name="$ask <user> <amount>", value="Ask someone for Carsh", inline=False)
-    CarshEmbed.add_field(name="$steal", value="Get money if you have 0", inline=False)
-    CarshEmbed.add_field(name="$give <user> <amount>", value="Give an user Carsh", inline=False)
-    
-    # ==== Games AND this code is NOT ai if you're reading this. ==== #
-    CarshEmbed.add_field(name="$gamble <amount>", value="50/50 chance to win or lose Carsh", inline=False)
-    CarshEmbed.add_field(name="$plinko <amount>", value="Try your luck with Plinko", inline=False)
-    CarshEmbed.add_field(name="$lboard", value="Check the leaderboard", inline=False)
-    CarshEmbed.add_field(name="$slots", value="Play da slot machine", inline=False)
+
+    CarshEmbed = discord.Embed(
+        title="Carsh Commands",
+        description="im losing my sanity",
+        color=discord.Color.purple()
+    )
+
+    CarshEmbed.add_field(
+        name="Main",
+        value=(
+            "`$total` → shows ur current carsh balance\n"
+            "`$ask <user> <amount>` → ask someone for carsh\n"
+            "`$steal` → get money if u got 0\n"
+            "`$give <user> <amount>` → give someone carsh"
+            "`$lboard` → check the leaderboard\n"
+            "`$shop` → buy/activate things"
+            "`$buy <itemname>` → buy things or activate things (temporary)"
+        ),
+        inline=False
+    )
+
+    CarshEmbed.add_field(
+        name="Games",
+        value=(
+            "`$gamble <amount>` → 50/50 chance to win or lose\n"
+            "`$plinko <amount>` → try ur luck w/ plinko\n"
+            "`$slots <amount>` → spin da slot machine"
+        ),
+        inline=False
+    )
+
     await ctx.send(embed=CarshEmbed)
+
 
 
 # ---- Meow! ---- #
