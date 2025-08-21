@@ -74,7 +74,7 @@ def change_balance(user_id, amount):
     return bal
 
 def channel_check(ctx):
-    return ctx.channel.id == CARSH_CHANNEL_ID
+    return ctx.channel.id in CARSH_CHANNEL_ID
 
 @bot.event
 async def on_ready():
@@ -861,34 +861,35 @@ async def shop(ctx):
     ShopEmbed.add_field(name="activatekitty", value="5000 Carsh", inline=False)
 
     await ctx.send(embed=ShopEmbed)
+SHOP_ITEMS = {
+    "itemname1": 500,
+    "activatekitty": 5000
+}
+
 @bot.command()
 async def buy(ctx, *, item_name: str):
     if not channel_check(ctx):
         return
-
     item_name = item_name.lower()
     if item_name not in SHOP_ITEMS:
-        await ctx.send("item not found
+        await ctx.send("item not found")
         return
 
     price = SHOP_ITEMS[item_name]
     if get_balance(ctx.author.id) < price:
-        await ctx.send("You broke cuh get sum Carsh")
+        await ctx.send("You broke cuh, get sum Carsh")
         return
-
     change_balance(ctx.author.id, -price)
-
     if item_name == "activatekitty":
         global kitty_active
         kitty_active = True
         await ctx.send(f"{ctx.author.mention} activated kitty mode for 10 minutes")
-
         async def deactivate_kitty():
             await asyncio.sleep(600)
             global kitty_active
             kitty_active = False
             await ctx.send("kitty has expired.")
-
+            
         asyncio.create_task(deactivate_kitty())
     else:
         await ctx.send(f"{ctx.author.mention} bought **{item_name.title()}** for {price} Carsh")
