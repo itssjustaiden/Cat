@@ -25,16 +25,14 @@ def run_flask():
 
 Thread(target=run_flask).start()
 
-
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
 bot = commands.Bot(command_prefix="$", intents=intents)
 bot.remove_command("help")
-
 kitty_active = False
 Allowed_Users = [1343941910309634078, 1276629095077249077]
-CAT_MESSAGES = ["meow", "zzz time", "purr", "hiss", "mraw"]
+CAT_MESSAGES = ["meow", "zzz time", "purrrrrr", "hiss", "mraw", "i love mommy", "snacks please"]
 THREAD_ID = 1407466187377348750  
 CARSH_CHANNEL_ID = [1400123331335688332, 1406641982033498183]
 DATA_FILE = "carsh_data.json"
@@ -45,321 +43,39 @@ def load_data():
         return {}
     with open(DATA_FILE, "r") as f:
         return json.load(f)
-
 def save_data(data):
     with open(DATA_FILE, "w") as f:
         json.dump(data, f, indent=4)
-
 def load_steal():
     if not os.path.exists(STEAL_FILE):
         return {}
     with open(STEAL_FILE, "r") as f:
         return json.load(f)
-
 def save_steal(data):
     with open(STEAL_FILE, "w") as f:
         json.dump(data, f, indent=4)
-
 def get_balance(user_id):
     return load_data().get(str(user_id), 0)
-
 def set_balance(user_id, amount):
     data = load_data()
     data[str(user_id)] = amount
     save_data(data)
-
 def change_balance(user_id, amount):
     bal = get_balance(user_id) + amount
     set_balance(user_id, max(bal,0))
     return bal
-
-def has_luckycoin(user_id):
-    return active_effects["luckycoin"].get(user_id,0) > int(time.time())
-    
 def channel_check(ctx):
     return ctx.channel.id in CARSH_CHANNEL_ID
-
 @bot.event
 async def on_ready():
     print(f"Logged in as {bot.user}")
     spam_cats.start()
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-@bot.command()
-async def slots(ctx,amount:int):
- if not channel_check(ctx):
-  return
- if amount<=0:
-  await ctx.send("bet a real amount pls")
-  return
- bal=get_balance(ctx.author.id)
- if bal<amount:
-  await ctx.send("u broke cuh, get sum Carsh")
-  return
-
- symbols=["🍒","🍊","🍎","🍇","💎"]
- weights=[50,44,10,5,1]
- payouts={"🍒":2,"🍊":5,"🍎":10,"🍇":25,"💎":50}
-
- if has_luckycoin(ctx.author.id):
-  weights=[int(w*1.25) for w in weights]  # 25% boost
-
- spin=random.choices(symbols,weights=weights,k=3)
- result=" | ".join(spin)
- payout=0
- if spin[0]==spin[1]==spin[2]:
-  payout=amount*payouts.get(spin[0],0)
-
- change_balance(ctx.author.id,-amount)
- if payout>0:
-  change_balance(ctx.author.id,payout)
-  await ctx.send(f"You rolled {result} 🎰 and WON {payout} Carsh")
- else:
-  await ctx.send(f"You rolled {result} 🎰 and LOST {amount} Carsh")
-
-
-@bot.command()
-async def total(ctx, user: discord.Member = None):
-    if not channel_check(ctx):
-        return
-    user = user or ctx.author
-    bal = get_balance(user.id)
-    await ctx.send(f"{user.name} has {bal} Carsh")
-
-@bot.command()
-async def gamble(ctx,amount:int):
- if not channel_check(ctx):
-  return
- if amount<=0 or get_balance(ctx.author.id)<amount:
-  await ctx.send("invalid amount or not enough Carsh")
-  return
-
- base_chance=0.5
- if has_luckycoin(ctx.author.id):
-  base_chance+=0.25  # 25% boost
-
- win=random.random() < base_chance
-
- if win:
-  change_balance(ctx.author.id,amount)
-  await ctx.send(f"{ctx.author.mention} won +{amount} Carsh")
- else:
-  change_balance(ctx.author.id,-amount)
-  await ctx.send(f"{ctx.author.mention} lost -{amount} Carsh")
-
-@bot.command()
-async def plinko(ctx,amount:int):
- if not channel_check(ctx):
-  return
- if amount<=0 or get_balance(ctx.author.id)<amount:
-  await ctx.send("invalid amount or not enough Carsh")
-  return
-
- board_template=["100","50","10","5","2","0.7","0.5","0.2","0.5","0.7","2","5","10","50","100"]
- weights=[0.5,2,10,20,30,50,60,80,60,50,30,20,10,2,0.5]
-
- if has_luckycoin(ctx.author.id):
-  weights=[w*1.25 for w in weights]  # 25% boost
-
- ball_index=random.choices(range(len(board_template)),weights=weights,k=1)[0]
- visual=" | ".join(f"[{slot}]" if idx==ball_index else slot for idx,slot in enumerate(board_template))
- multi=float(board_template[ball_index])
- winnings=int(amount*multi)
- change_balance(ctx.author.id,-amount)
- change_balance(ctx.author.id,winnings)
-
- await ctx.send(f"{ctx.author.mention} played Plinko with {amount} Carsh\nFinal board:\n{visual}\nYou got {winnings} Carsh (x{multi})")
-
-
-@bot.command()
-async def give(ctx, member: discord.Member, amount: int):
-    if amount <= 0:
-        await ctx.send("invalid amount")
-        return
-
-    if get_balance(ctx.author.id) < amount:
-        await ctx.send("u broke cuh 😬")
-        return
-
-    embed = discord.Embed(
-        title="Confirm",
-        description=f"Send {amount} to {member.name}?",
-        color=discord.Color.purple()
-    )
-
-    class GiveView(View):
-        def __init__(self):
-            super().__init__(timeout=500)
-
-        @discord.ui.button(label="✅", style=discord.ButtonStyle.success)
-        async def confirm(self, interaction: discord.Interaction, button: Button):
-            if interaction.user.id != ctx.author.id:
-                await interaction.response.send_message("not ur button smh", ephemeral=True)
-                return
-            change_balance(ctx.author.id, -amount)
-            change_balance(member.id, amount)
-            await interaction.response.edit_message(
-                embed=discord.Embed(
-                    title="Sent!",
-                    description=f"{amount} Carsh sent to {member.name}",
-                    color=discord.Color.green()
-                ),
-                view=None
-            )
-
-        @discord.ui.button(label="❌", style=discord.ButtonStyle.danger)
-        async def cancel(self, interaction: discord.Interaction, button: Button):
-            if interaction.user.id != ctx.author.id:
-                await interaction.response.send_message("not ur button smh", ephemeral=True)
-                return
-            await interaction.response.edit_message(
-                embed=discord.Embed(
-                    title="Cancelled",
-                    description=f"Transfer cancelled",
-                    color=discord.Color.red()
-                ),
-                view=None
-            )
-
-    await ctx.send(embed=embed, view=GiveView())
-    
-@bot.command()
-async def steal(ctx):
-    if not channel_check(ctx):
-        return
-    user_id = str(ctx.author.id)
-    steal_data = load_steal()
-    now = int(time.time())
-    last = steal_data.get(user_id,0)
-    if now - last < 86400:
-        remaining = 86400 - (now-last)
-        hrs = remaining//3600
-        mins = (remaining%3600)//60
-        secs = remaining%60
-        await ctx.send(f"Steal available in {hrs}h {mins}m {secs}s")
-        return
-    amount = random.randint(5,20)
-
-    # check for doublesteal effect
-    if user_id in active_effects["doublesteal"]:
-        effect_end = active_effects["doublesteal"][user_id]
-        if now < effect_end:
-            amount *= 2
-
-    change_balance(ctx.author.id, amount)
-    steal_data[user_id] = now
-    save_steal(steal_data)
-    await ctx.send(f"{ctx.author.mention} stole {amount} Carsh from the bank!")
-
-
-@bot.command()
-async def lboard(ctx):
-    if not channel_check(ctx):
-        return
-    data = load_data()
-    if not data:
-        await ctx.send("No one has Carsh yet")
-        return
-    sorted_data = sorted(data.items(), key=lambda x:x[1], reverse=True)
-    embed = discord.Embed(title="Carsh Leaderboard", color=discord.Color.purple())
-    for i,(uid,bal) in enumerate(sorted_data[:10], start=1):
-        user = ctx.guild.get_member(int(uid))
-        name = user.name if user else f"User {uid}"
-        embed.add_field(name=f"{i}. {name}", value=f"{bal} Carsh", inline=False)
-    await ctx.send(embed=embed)
-
-@bot.command()
-async def ask(ctx, user: discord.Member, amount: int):
-    if not channel_check(ctx):
-        return
-    if user.id==ctx.author.id or amount<=0:
-        await ctx.send("invalid request")
-        return
-    if get_balance(user.id) < amount:
-        await ctx.send(f"{user.mention} does not have enough Carsh")
-        return
-    embed = discord.Embed(title="Someone is asking for Carsh", description=f"{ctx.author.mention} is asking {user.mention} for {amount} Carsh", color=discord.Color.purple())
-    class AskView(View):
-        def __init__(self):
-            super().__init__(timeout=500)
-        @discord.ui.button(label="✅", style=discord.ButtonStyle.success)
-        async def give(self, interaction: discord.Interaction, button: Button):
-            if interaction.user.id!=user.id:
-                await interaction.response.send_message("not your button", ephemeral=True)
-                return
-            change_balance(user.id, -amount)
-            change_balance(ctx.author.id, amount)
-            await interaction.response.edit_message(embed=discord.Embed(title="Transfer Complete", description=f"{user.mention} gave {ctx.author.mention} {amount} Carsh", color=discord.Color.green()), view=None)
-        @discord.ui.button(label="❌", style=discord.ButtonStyle.danger)
-        async def decline(self, interaction: discord.Interaction, button: Button):
-            if interaction.user.id!=user.id:
-                await interaction.response.send_message("not your button", ephemeral=True)
-                return
-            await interaction.response.edit_message(embed=discord.Embed(title="Request Declined", description=f"{user.mention} declined {ctx.author.mention}'s request", color=discord.Color.red()), view=None)
-    await ctx.send(embed=embed, view=AskView())
-
-
-
-
-@bot.command()
-async def GiveM(ctx, user: str, amount: int):
-    if ctx.author.id not in Allowed_Users:
-        await ctx.send("not allowed")
-        return
-
-    if user.lower() in ["@everyone", "@here"]:
-        for member in ctx.guild.members:
-            if not member.bot:
-                change_balance(member.id, amount)
-        await ctx.send(f"Gave {amount} Carsh to everyone!")
-        return
-
-    member = ctx.guild.get_member(int(user.strip("<@!>")))
-    if not member:
-        await ctx.send("user not found")
-        return
-    change_balance(member.id, amount)
-    await ctx.send(f"Gave {member.mention} {amount} Carsh")
-@bot.command()
-async def TakeM(ctx, user: str, amount: int):
-    if ctx.author.id not in Allowed_Users:
-        await ctx.send("not allowed")
-        return
-
-    if user.lower() in ["@everyone", "@here"]:
-        for member in ctx.guild.members:
-            if not member.bot:
-                change_balance(member.id, -amount)
-        await ctx.send(f"Took {amount} Carsh from everyone!")
-        return
-
-    member = ctx.guild.get_member(int(user.strip("<@!>")))
-    if not member:
-        await ctx.send("user not found")
-        return
-    change_balance(member.id, -amount)
-    await ctx.send(f"Took {amount} Carsh from {member.mention}")
-@tasks.loop(minutes=2)
+@tasks.loop(minutes=3)
 async def spam_cats():
     thread = await bot.fetch_channel(THREAD_ID)
     await thread.send(random.choice(CAT_MESSAGES))
-
-
 help_pages = []
-
 embed1 = discord.Embed(title="MEOW - Page 1", description="all commands:", color=discord.Color.purple())
 embed1.add_field(name="$ping", value="check if bot is alive", inline=False)
 embed1.add_field(name="$getpfp [@user]", value="get a user's profile picture", inline=False)
@@ -371,7 +87,6 @@ embed1.add_field(name="$purgeuser <user> <count>", value="delete last 1–100 me
 embed1.add_field(name="$Gambling1", value="you MIGHT get timeout from this", inline=False)
 embed1.add_field(name="$help", value="show this embed", inline=False)
 help_pages.append(embed1)
-
 embed2 = discord.Embed(title="MEOW - Page 2", description="more commands:", color=discord.Color.purple())
 embed2.add_field(name="$joke", value="gets a random joke", inline=False)
 embed2.add_field(name="$ship <user1> <user2>", value="ships user and user!", inline=False)
@@ -381,59 +96,36 @@ embed2.add_field(name="$catfact", value="gives you a random cat fact", inline=Fa
 embed2.add_field(name="$eightball <question>", value="eight ball", inline=False)
 embed2.add_field(name="$helpcarsh", value="you can GAMBLE even more!", inline=False)
 help_pages.append(embed2)
-
 class HelpView(View):
     def __init__(self):
         super().__init__(timeout=None)
         self.current_page = 0
-
     async def update_message(self, interaction):
         total_pages = len(help_pages)
         self.prev_button.label = f"◀️ {self.current_page + 1}/{total_pages}"
         self.next_button.label = f"{self.current_page + 1}/{total_pages} ▶️"
         await interaction.response.edit_message(embed=help_pages[self.current_page], view=self)
-
     @discord.ui.button(label="◀️ 1/2", style=discord.ButtonStyle.primary)
     async def prev_button(self, interaction: discord.Interaction, button: Button):
         self.current_page = (self.current_page - 1) % len(help_pages)
         await self.update_message(interaction)
-
     @discord.ui.button(label="1/2▶️", style=discord.ButtonStyle.primary)
     async def next_button(self, interaction: discord.Interaction, button: Button):
         self.current_page = (self.current_page + 1) % len(help_pages)
         await self.update_message(interaction)
 
-
-
 @bot.command()
 async def help(ctx):
     view = HelpView()
     await ctx.send(embed=help_pages[0], view=view)
-
 @bot.command()
 async def ping(ctx):
     await ctx.send("pong")
-
 @bot.command()
 async def getpfp(ctx, member: discord.Member = None):
     member = member or ctx.author
     await ctx.send(f"{member.name}'s profile picture:")
     await ctx.send(member.avatar.url)
-
-@bot.command()
-async def Gambling1(ctx):
-    outcome = random.choice(["Lucky", "Unlucky"])
-    if outcome == "Lucky":
-        embed = discord.Embed(title="Good job!", description="You're lucky...", color=discord.Color.green())
-        await ctx.send(embed=embed)
-    else:
-        try:
-            timeout_until = discord.utils.utcnow() + datetime.timedelta(seconds=90)
-            await ctx.author.timeout(timeout_until, reason="Never gamble again")
-            await ctx.send(f"{ctx.author.name}, you got unlucky!")
-        except discord.Forbidden:
-            await ctx.send("I cannot timeout you, you're lucky.")
-
 @bot.command()
 async def joke(ctx):
     url = "https://v2.jokeapi.dev/joke/Any?blacklistFlags=nsfw,racist,sexist,explicit"
@@ -449,7 +141,6 @@ async def joke(ctx):
             await ctx.send("hmm something went wrong fetching a joke.")
     except:
         await ctx.send("can't get a joke rn, try again later.")
-
 @bot.command()
 async def kick(ctx, member: discord.Member, *, reason="No reason provided"):
     if ctx.author.guild_permissions.kick_members:
@@ -460,7 +151,6 @@ async def kick(ctx, member: discord.Member, *, reason="No reason provided"):
             await ctx.send("I cannot kick this member.")
     else:
         await ctx.send("You don't have permission to kick members.")
-
 @bot.command()
 async def timeout(ctx, member: discord.Member, duration: str, *, reason="No reason provided"):
     if not ctx.author.guild_permissions.moderate_members:
@@ -491,7 +181,6 @@ async def timeout(ctx, member: discord.Member, duration: str, *, reason="No reas
         await ctx.send("I cannot timeout this member.")
     except Exception as e:
         await ctx.send(f"An unexpected error occurred: {str(e)}")
-
 @bot.command()
 async def untimeout(ctx, member: discord.Member):
     if not ctx.author.guild_permissions.moderate_members:
@@ -502,7 +191,6 @@ async def untimeout(ctx, member: discord.Member):
         await ctx.send(f"{member.name} has been un-timed out.")
     except:
         await ctx.send("I cannot untimeout this member.")
-
 @bot.command()
 async def purge(ctx, count: int):
     if not ctx.author.guild_permissions.manage_messages:
@@ -514,7 +202,6 @@ async def purge(ctx, count: int):
     confirmation = await ctx.send(f"Deleted {len(deleted)} messages.")
     await asyncio.sleep(5)
     await confirmation.delete()
-
 @bot.command()
 async def purgeuser(ctx, member: discord.Member, count: int):
     if not ctx.author.guild_permissions.manage_messages:
@@ -538,7 +225,6 @@ async def PERISH(ctx):
         exit()
     else:
         await ctx.send("fuck you")
-
 @bot.command()
 async def activatekitty(ctx):
     global kitty_active
@@ -548,10 +234,7 @@ async def activatekitty(ctx):
     kitty_active = not kitty_active
     state = "enabled" if kitty_active else "disabled"
     await ctx.send(f"kitty is now {state}.")
-
-
 perfect_matches = [("aiden", "kiara"), ("brokenspawn", "limegirl"), ("aiden", "kia")]
-
 @bot.command()
 async def ship(ctx, user1: str, user2: str):
     name1 = user1.strip()
@@ -567,7 +250,6 @@ async def ship(ctx, user1: str, user2: str):
     love_bar = "💖" * filled_length + "🖤" * empty_length
     embed = discord.Embed(title=f"💘 {name1} x {name2}", description=f"**Ship Name:** {ship_name}\n**Compatibility:** {compatibility}%\n{love_bar}", color=discord.Color.purple())
     await ctx.send(embed=embed)
-
 @bot.command()
 async def AdminAbuse(ctx):
     if ctx.author.id not in Allowed_Users:
@@ -579,7 +261,6 @@ async def AdminAbuse(ctx):
     embed_admin.add_field(name="$ghostping <user>", value="pings an user then deletes the message", inline=False)
     embed_admin.add_field(name="$reversemsg <channel>", value="reverses the last message example: Hello --> olleH", inline=False)
     await ctx.send(embed=embed_admin)
-
 @bot.command()
 async def sendmsg(ctx, channel: discord.TextChannel, *, msg: str):
     if ctx.author.id not in Allowed_Users:
@@ -609,7 +290,6 @@ async def reactmsg(ctx, channel: discord.TextChannel, emoji_name: str):
             break
     except Exception as e:
         await ctx.send(f"Error: {e}")
-
 @bot.command()
 async def reversemsg(ctx, channel: discord.TextChannel):
     if ctx.author.id not in Allowed_Users:
@@ -626,7 +306,6 @@ async def reversemsg(ctx, channel: discord.TextChannel):
             break
     except Exception as e:
         await ctx.send(f"Error: {e}")
-
 @bot.command()
 async def ghostping(ctx, member: discord.Member, channel: discord.TextChannel = None):
     if ctx.author.id not in Allowed_Users:
@@ -696,7 +375,6 @@ async def compliment(ctx, member: discord.Member = None):
         await ctx.send(f"{member.mention}, {choice}")
     except:
         await ctx.send("can't fetch, try again later.")
-
 @bot.command()
 async def ToD(ctx):
     embed = discord.Embed(title="Truth or Dare", description="Choose an option below!", color=discord.Color.purple())
@@ -716,7 +394,6 @@ async def catfact(ctx):
                 await ctx.send("couldn’t fetch cat facts")
 
 random_string = 1407381269188313099
-
 @bot.event
 async def on_message_delete(message):
     if message.author.bot or not message.guild:
@@ -743,8 +420,6 @@ async def on_message_delete(message):
 
     deletedEMBED.set_footer(text=f"message id: {message.id}")
     await log_channel.send(embed=deletedEMBED)
-
-
 @bot.event
 async def on_message_edit(before, after):
     if before.author.bot or not before.guild:
@@ -766,7 +441,6 @@ async def on_message_edit(before, after):
     editedEMBED.add_field(name="after", value=after.content or "*no text*", inline=False)
     editedEMBED.set_footer(text=f"message id: {before.id}")
     await log_channel.send(embed=editedEMBED)
-
 @bot.command()
 async def eightball(ctx, *, question: str):
     responses = [
@@ -798,7 +472,6 @@ async def eightball(ctx, *, question: str):
         color=discord.Color.purple()
     )
     await ctx.send(embed=eightballbed)
-
 @bot.command()
 async def dmuser(ctx, user_id: int, amount: int, *, message: str):
     if ctx.author.id not in Allowed_Users:
@@ -823,8 +496,6 @@ async def dmuser(ctx, user_id: int, amount: int, *, message: str):
     conf_msg = await ctx.send(f"sent `{sent}` DMs to {user.name}")
     await asyncio.sleep(0.5)
     await conf_msg.delete()
-
-
 @bot.event
 async def on_message(message):
     if message.author.bot:
@@ -872,13 +543,11 @@ async def on_message(message):
 async def helpcarsh(ctx):
     if not channel_check(ctx):
         return
-
     CarshEmbed = discord.Embed(
         title="Carsh Commands",
         description="im losing my sanity",
         color=discord.Color.purple()
     )
-
     CarshEmbed.add_field(
         name="Main",
         value=(
@@ -890,7 +559,6 @@ async def helpcarsh(ctx):
         ),
         inline=False
     )
-
     CarshEmbed.add_field(
         name="Games",
         value=(
@@ -902,9 +570,243 @@ async def helpcarsh(ctx):
     )
 
     await ctx.send(embed=CarshEmbed)
+@bot.command()
+async def total(ctx, user: discord.Member = None):
+    if not channel_check(ctx):
+        return
+    user = user or ctx.author
+    bal = get_balance(user.id)
+    await ctx.send(f"{user.name} has {bal} Carsh")
+@bot.command()
+async def ask(ctx, user: discord.Member, amount: int):
+    if not channel_check(ctx):
+        return
+    if user.id==ctx.author.id or amount<=0:
+        await ctx.send("invalid request")
+        return
+    if get_balance(user.id) < amount:
+        await ctx.send(f"{user.mention} does not have enough Carsh")
+        return
+    embed = discord.Embed(title="Someone is asking for Carsh", description=f"{ctx.author.mention} is asking {user.mention} for {amount} Carsh", color=discord.Color.purple())
+    class AskView(View):
+        def __init__(self):
+            super().__init__(timeout=500)
+        @discord.ui.button(label="✅", style=discord.ButtonStyle.success)
+        async def give(self, interaction: discord.Interaction, button: Button):
+            if interaction.user.id!=user.id:
+                await interaction.response.send_message("not your button", ephemeral=True)
+                return
+            change_balance(user.id, -amount)
+            change_balance(ctx.author.id, amount)
+            await interaction.response.edit_message(embed=discord.Embed(title="Transfer Complete", description=f"{user.mention} gave {ctx.author.mention} {amount} Carsh", color=discord.Color.green()), view=None)
+        @discord.ui.button(label="❌", style=discord.ButtonStyle.danger)
+        async def decline(self, interaction: discord.Interaction, button: Button):
+            if interaction.user.id!=user.id:
+                await interaction.response.send_message("not your button", ephemeral=True)
+                return
+            await interaction.response.edit_message(embed=discord.Embed(title="Request Declined", description=f"{user.mention} declined {ctx.author.mention}'s request", color=discord.Color.red()), view=None)
+    await ctx.send(embed=embed, view=AskView())
+@bot.command()
+async def steal(ctx):
+    if not channel_check(ctx):
+        return
+    user_id = str(ctx.author.id)
+    steal_data = load_steal()
+    now = int(time.time())
+    last = steal_data.get(user_id, 0)
+    if now - last < 86400:
+        remaining = 86400 - (now - last)
+        hrs = remaining // 3600
+        mins = (remaining % 3600) // 60
+        secs = remaining % 60
+        await ctx.send(f"Steal available in {hrs}h {mins}m {secs}s")
+        return
+    amount = random.randint(5, 20)
 
+    change_balance(ctx.author.id, amount)
+    steal_data[user_id] = now
+    save_steal(steal_data)
+    await ctx.send(f"{ctx.author.mention} stole {amount} Carsh from the cank!")
+@bot.command()
+async def give(ctx, member: discord.Member, amount: int):
+    if amount <= 0:
+        await ctx.send("invalid amount")
+        return
 
+    if get_balance(ctx.author.id) < amount:
+        await ctx.send("u broke cuh 😬")
+        return
 
+    embed = discord.Embed(
+        title="Confirm",
+        description=f"Send {amount} to {member.name}?",
+        color=discord.Color.purple()
+    )
+
+    class GiveView(View):
+        def __init__(self):
+            super().__init__(timeout=500)
+
+        @discord.ui.button(label="✅", style=discord.ButtonStyle.success)
+        async def confirm(self, interaction: discord.Interaction, button: Button):
+            if interaction.user.id != ctx.author.id:
+                await interaction.response.send_message("not ur button smh", ephemeral=True)
+                return
+            change_balance(ctx.author.id, -amount)
+            change_balance(member.id, amount)
+            await interaction.response.edit_message(
+                embed=discord.Embed(
+                    title="Sent!",
+                    description=f"{amount} Carsh sent to {member.name}",
+                    color=discord.Color.green()
+                ),
+                view=None
+            )
+
+        @discord.ui.button(label="❌", style=discord.ButtonStyle.danger)
+        async def cancel(self, interaction: discord.Interaction, button: Button):
+            if interaction.user.id != ctx.author.id:
+                await interaction.response.send_message("not ur button smh", ephemeral=True)
+                return
+            await interaction.response.edit_message(
+                embed=discord.Embed(
+                    title="Cancelled",
+                    description=f"Transfer cancelled",
+                    color=discord.Color.red()
+                ),
+                view=None
+            )
+
+    await ctx.send(embed=embed, view=GiveView())
+@bot.command()
+async def lboard(ctx):
+    if not channel_check(ctx):
+        return
+    data = load_data()
+    if not data:
+        await ctx.send("No one has Carsh yet")
+        return
+    sorted_data = sorted(data.items(), key=lambda x:x[1], reverse=True)
+    embed = discord.Embed(title="Carsh Leaderboard", color=discord.Color.purple())
+    for i,(uid,bal) in enumerate(sorted_data[:10], start=1):
+        user = ctx.guild.get_member(int(uid))
+        name = user.name if user else f"User {uid}"
+        embed.add_field(name=f"{i}. {name}", value=f"{bal} Carsh", inline=False)
+    await ctx.send(embed=embed)
+@bot.command()
+async def slots(ctx, amount: int):
+    if not channel_check(ctx):
+        return
+    if amount <= 0:
+        await ctx.send("bet a real amount pls")
+        return
+    bal = get_balance(ctx.author.id)
+    if bal < amount:
+        await ctx.send("u broke cuh, get sum Carsh")
+        return
+
+    symbols = ["🍒", "🍊", "🍎", "🍇", "💎"]
+    weights = [50, 44, 10, 5, 1]
+    payouts = {"🍒": 2, "🍊": 5, "🍎": 10, "🍇": 25, "💎": 50}
+
+    spin = random.choices(symbols, weights=weights, k=3)
+    result = " | ".join(spin)
+    payout = 0
+    if spin[0] == spin[1] == spin[2]:
+        payout = amount * payouts.get(spin[0], 0)
+
+    change_balance(ctx.author.id, -amount)
+    if payout > 0:
+        change_balance(ctx.author.id, payout)
+        await ctx.send(f"You rolled {result} 🎰 and WON {payout} Carsh")
+    else:
+        await ctx.send(f"You rolled {result} 🎰 and LOST {amount} Carsh")
+@bot.command()
+async def gamble(ctx, amount: int):
+    if not channel_check(ctx):
+        return
+    if amount <= 0 or get_balance(ctx.author.id) < amount:
+        await ctx.send("invalid amount or not enough Carsh")
+        return
+
+    base_chance = 0.5
+    win = random.random() < base_chance
+
+    if win:
+        change_balance(ctx.author.id, amount)
+        await ctx.send(f"{ctx.author.mention} won +{amount} Carsh")
+    else:
+        change_balance(ctx.author.id, -amount)
+        await ctx.send(f"{ctx.author.mention} lost -{amount} Carsh")
+@bot.command()
+async def plinko(ctx, amount: int):
+    if not channel_check(ctx):
+        return
+    if amount <= 0 or get_balance(ctx.author.id) < amount:
+        await ctx.send("invalid amount or not enough Carsh")
+        return
+
+    board_template = ["100","50","10","5","2","0.7","0.5","0.2","0.5","0.7","2","5","10","50","100"]
+    weights = [0.5,2,10,20,30,50,60,80,60,50,30,20,10,2,0.5]
+
+    ball_index = random.choices(range(len(board_template)), weights=weights, k=1)[0]
+    visual = " | ".join(f"[{slot}]" if idx == ball_index else slot for idx, slot in enumerate(board_template))
+    multi = float(board_template[ball_index])
+    winnings = int(amount * multi)
+    change_balance(ctx.author.id, -amount)
+    change_balance(ctx.author.id, winnings)
+
+    await ctx.send(f"{ctx.author.mention} played Plinko with {amount} Carsh\nFinal board:\n{visual}\nYou got {winnings} Carsh (x{multi})")
+@bot.command()
+async def GiveM(ctx, user: str, amount: int):
+    if ctx.author.id not in Allowed_Users:
+        await ctx.send("not allowed")
+        return
+
+    if user.lower() in ["@everyone", "@here"]:
+        for member in ctx.guild.members:
+            if not member.bot:
+                change_balance(member.id, amount)
+        await ctx.send(f"Gave {amount} Carsh to everyone!")
+        return
+
+    member = ctx.guild.get_member(int(user.strip("<@!>")))
+    if not member:
+        await ctx.send("user not found")
+        return
+    change_balance(member.id, amount)
+    await ctx.send(f"Gave {member.mention} {amount} Carsh")
+@bot.command()
+async def TakeM(ctx, user: str, amount: int):
+    if ctx.author.id not in Allowed_Users:
+        await ctx.send("not allowed")
+        return
+
+    if user.lower() in ["@everyone", "@here"]:
+        for member in ctx.guild.members:
+            if not member.bot:
+                change_balance(member.id, -amount)
+        await ctx.send(f"Took {amount} Carsh from everyone!")
+        return
+    member = ctx.guild.get_member(int(user.strip("<@!>")))
+    if not member:
+        await ctx.send("user not found")
+        return
+    change_balance(member.id, -amount)
+    await ctx.send(f"Took {amount} Carsh from {member.mention}")
+@bot.command()
+async def Gambling1(ctx):
+    outcome = random.choice(["Lucky", "Unlucky"])
+    if outcome == "Lucky":
+        embed = discord.Embed(title="Good job!", description="You're lucky...", color=discord.Color.green())
+        await ctx.send(embed=embed)
+    else:
+        try:
+            timeout_until = discord.utils.utcnow() + datetime.timedelta(seconds=90)
+            await ctx.author.timeout(timeout_until, reason="Never gamble again")
+            await ctx.send(f"{ctx.author.name}, you got unlucky!")
+        except discord.Forbidden:
+            await ctx.send("I cannot timeout you, you're lucky.")
 # ---- Meow! ---- #
 token = os.getenv("BOT_TOKEN")
 if not token:
