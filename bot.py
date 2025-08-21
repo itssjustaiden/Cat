@@ -906,15 +906,11 @@ async def buy(ctx, *, item_name: str):
     timer = item["timer"]
 
     if action == "kitty" and kitty_active:
-        msg = await ctx.send("this kitty is already activated", ephemeral=True)
-        await asyncio.sleep(5)
-        await msg.delete()
+        await ctx.send("this kitty is already activated", ephemeral=True)
         return
     elif action in ["luckycoin", "doublesteal"]:
         if ctx.author.id in active_effects[action] and active_effects[action][ctx.author.id] > int(time.time()):
-            msg = await ctx.send(f"this {item_name} is already activated", ephemeral=True)
-            await asyncio.sleep(5)
-            await msg.delete()
+            await ctx.send(f"this {item_name} is already activated", ephemeral=True)
             return
 
     price = item["price"]
@@ -947,12 +943,6 @@ async def buy(ctx, *, item_name: str):
 
     else:
         await ctx.send(f"{ctx.author.mention} bought **{item_name.title()}** for {price} Carsh")
-
-
-
-
-
-
 
 @bot.command()
 async def helpcarsh(ctx):
