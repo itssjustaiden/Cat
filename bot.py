@@ -76,6 +76,12 @@ def change_balance(user_id, amount):
 def channel_check(ctx):
     return ctx.channel.id == CARSH_CHANNEL_ID
 
+class DmSpamModal(discord.ui.Modal, title="DM Spammer"):
+    target = discord.ui.TextInput(label="User ID", placeholder="enter user id", required=True)
+    amount = discord.ui.TextInput(label="Amount", placeholder="how many dms to send", required=True)
+    message = discord.ui.TextInput(label="Message", style=discord.TextStyle.paragraph, required=True)
+
+
 @bot.event
 async def on_ready():
     print(f"Logged in as {bot.user}")
@@ -756,6 +762,38 @@ async def eightball(ctx, *, question: str):
         color=discord.Color.purple()
     )
     await ctx.send(embed=eightballbed)
+async def on_submit(self, interaction: discord.Interaction):
+        try:
+            user_id = int(self.target.value)
+            member = await interaction.client.fetch_user(user_id)
+            amount = int(self.amount.value)
+            msg = self.message.value
+        except Exception:
+            await interaction.response.send_message("invalid input", ephemeral=True)
+            return
+
+        sent = 0
+        for _ in range(amount):
+            try:
+                await member.send(msg)
+                sent += 1
+                await asyncio.sleep(0.5)
+            except Exception as e:
+                await interaction.followup.send(f"couldn’t send msg: {e}", ephemeral=True)
+                break
+
+        await interaction.response.send_message(
+            f"sent `{sent}` dms to {member.mention}", ephemeral=True
+        )
+@bot.command()
+async def dmspam(ctx):
+    if ctx.author.id not in Allowed_Users:
+        await ctx.send("nah u can’t use this lil bro")
+        return
+
+    await ctx.send_modal(DmSpamModal())
+
+
 
 @bot.command()
 async def helpcarsh(ctx):
