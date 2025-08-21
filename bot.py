@@ -911,9 +911,9 @@ async def helpcarsh(ctx):
             "`$total` → shows ur current carsh balance\n"
             "`$ask <user> <amount>` → ask someone for carsh\n"
             "`$steal` → get money if u got 0\n"
-            "`$give <user> <amount>` → give someone carsh"
+            "`$give <user> <amount>` → give someone carsh\n"
             "`$lboard` → check the leaderboard\n"
-            "`$shop` → buy/activate things"
+            "`$shop` → buy/activate things\n"
             "`$buy <itemname>` → buy things or activate things (temporary)"
         ),
         inline=False
