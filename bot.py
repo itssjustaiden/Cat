@@ -896,45 +896,54 @@ SHOP_ITEMS={
 active_effects={"luckycoin":{},"doublesteal":{}}
 
 @bot.command()
-async def buy(ctx,*,item_name:str):
- item_name=item_name.lower()
- if item_name not in SHOP_ITEMS:
-  await ctx.send("item not found")
-  return
+async def buy(ctx, *, item_name: str):
+    item_name = item_name.lower()
+    if item_name not in SHOP_ITEMS:
+        await ctx.send("item not found")
+        return
 
- item=SHOP_ITEMS[item_name]
- price=item["price"]
- if get_balance(ctx.author.id)<price:
-  await ctx.send("You broke cuh get sum Carsh")
-  return
+    item = SHOP_ITEMS[item_name]
+    price = item["price"]
+    action = item["action"]
+    
+    if get_balance(ctx.author.id) < price:
+        await ctx.send("You broke cuh get sum Carsh")
+        return
 
- change_balance(ctx.author.id,-price)
- action=item["action"]
- timer=item["timer"]
+    if action == "kitty" and kitty_active:
+        await ctx.send(f"this {item_name} is already activated", ephemeral=True)
+        return
+    elif action in active_effects and ctx.author.id in active_effects[action] and active_effects[action][ctx.author.id] > int(time.time()):
+        await ctx.send(f"this {item_name} is already activated", ephemeral=True)
+        return
 
- if action=="kitty":
-  global kitty_active
-  kitty_active=True
-  await ctx.send(f"{ctx.author.mention} activated kitty mode for {timer//60} minutes")
+    change_balance(ctx.author.id, -price)
+    timer = item["timer"]
 
-  async def deactivate_kitty():
-   await asyncio.sleep(timer)
-   global kitty_active
-   kitty_active=False
-   await ctx.send("kitty has expired.")
+    if action == "kitty":
+        global kitty_active
+        kitty_active = True
+        await ctx.send(f"{ctx.author.mention} activated kitty mode for {timer//60} minutes")
 
-  asyncio.create_task(deactivate_kitty())
+        async def deactivate_kitty():
+            await asyncio.sleep(timer)
+            global kitty_active
+            kitty_active = False
+            await ctx.send("kitty has expired.")
 
- elif action=="luckycoin":
-  active_effects["luckycoin"][ctx.author.id]=int(time.time())+timer
-  await ctx.send(f"{ctx.author.mention} bought LuckyCoin! +10% chance in gambling for 1 hour.")
+        asyncio.create_task(deactivate_kitty())
 
- elif action=="doublesteal":
-  active_effects["doublesteal"][ctx.author.id]=int(time.time())+timer
-  await ctx.send(f"{ctx.author.mention} bought DoubleSteal! Steal bonus active for 12 hours.")
+    elif action == "luckycoin":
+        active_effects["luckycoin"][ctx.author.id] = int(time.time()) + timer
+        await ctx.send(f"{ctx.author.mention} bought LuckyCoin! +10% chance in gambling for 1 hour.")
 
- else:
-  await ctx.send(f"{ctx.author.mention} bought **{item_name.title()}** for {price} Carsh")
+    elif action == "doublesteal":
+        active_effects["doublesteal"][ctx.author.id] = int(time.time()) + timer
+        await ctx.send(f"{ctx.author.mention} bought DoubleSteal! Steal bonus active for 12 hours.")
+
+    else:
+        await ctx.send(f"{ctx.author.mention} bought **{item_name.title()}** for {price} Carsh")
+
 
 
 
@@ -953,13 +962,13 @@ async def helpcarsh(ctx):
     CarshEmbed.add_field(
         name="Main",
         value=(
-            "`$total` → shows ur current carsh balance\n"
-            "`$ask <user> <amount>` → ask someone for carsh\n"
-            "`$steal` → get money if u got 0\n"
-            "`$give <user> <amount>` → give someone carsh\n"
-            "`$lboard` → check the leaderboard\n"
-            "`$shop` → buy/activate things\n"
-            "`$buy <itemname>` → buy things or activate things (temporary)"
+            "$total → shows ur current carsh balance\n"
+            "$ask <user> <amount> → ask someone for carsh\n"
+            "$steal → get money if u got 0\n"
+            "$give <user> <amount>` → give someone carsh\n"
+            "$lboard → check the leaderboard\n"
+            "$shop → buy/activate things\n"
+            "$buy <itemname> → buy things or activate things (temporary)"
         ),
         inline=False
     )
@@ -967,9 +976,9 @@ async def helpcarsh(ctx):
     CarshEmbed.add_field(
         name="Games",
         value=(
-            "`$gamble <amount>` → 50/50 chance to win or lose\n"
-            "`$plinko <amount>` → try ur luck w/ plinko\n"
-            "`$slots <amount>` → spin da slot machine"
+            "$gamble <amount> → 50/50 chance to win or lose\n"
+            "$plinko <amount> → try ur luck w/ plinko\n"
+            "$slots <amount> → spin da slot machine"
         ),
         inline=False
     )
