@@ -490,45 +490,35 @@ async def dmuser(ctx, user_id: int, amount: int, *, message: str):
     await asyncio.sleep(0.5)
     await conf_msg.delete()
 
-@bot.event
-async def on_message(message):
-    if message.author.bot:
-        return
-    if "grandpa" in message.content.lower():
-        await message.channel.send("sybau❌😭🙏")
+if message.channel.id == Fuckasskitty and bot.user in message.mentions:
+    user_msg = message.content.replace(f"<@{bot.user.id}>", "").replace(f"<@!{bot.user.id}>", "").strip()
+    if not user_msg:
+        await message.channel.send("what’s up, why’d you ping me?")
+    else:
+        api_key = os.getenv("CAT_AI_KEY")
+        url = "https://openrouter.ai/api/v1/chat/completions"
+        personality = (
+            "You are a cat-themed AI chatbot. Respond with short, concise messages. Do NOT use emojis. Do NOT flirt or be sexual/freaky. "
+            "Use swear words ALOT. Be casual, a little snarky, and direct. Keep responses under 20 words when possible."
+        )
+        payload = {
+            "model": "deepseek/deepseek-r1:free",
+            "messages": [
+                {"role": "system", "content": personality},
+                {"role": "user", "content": user_msg}
+            ]
+        }
+        headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
         try:
-            timeout_until = datetime.datetime.utcnow() + datetime.timedelta(seconds=15)
-            await message.author.timeout(timeout_until, reason="Never say grandpa")
-            await message.channel.send(f"{message.author.name}, never say that again.")
-        except discord.Forbidden:
-            await message.channel.send("I cannot timeout you, probably due to role hierarchy.")
-    if message.channel.id == Fuckasskitty and bot.user in message.mentions:
-        user_msg = message.content.replace(f"<@{bot.user.id}>", "").replace(f"<@!{bot.user.id}>", "").strip()
-        if not user_msg:
-            await message.channel.send("what’s up, why’d you ping me?")
-        else:
-            api_key = os.getenv("CAT_AI_KEY")
-            url = "https://openrouter.ai/api/v1/chat/completions"
-            personality = (
-    "You are a cat-themed AI chatbot. Respond with short, concise messages. Do NOT use emojis. Do NOT flirt or be sexual/freaky. "
-    "Use swear words ALOT. Be casual, a little snarky, and direct. Keep responses under 20 words when possible."
-)
-            payload = {
-                "model": "deepseek/deepseek-r1:free",
-                "messages": [
-                    {"role": "system", "content": personality},
-                    {"role": "user", "content": user_msg}
-                ]
-            }
-            headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
-            try:
-                resp = requests.post(url, json=payload, headers=headers)
-                reply = resp.json()["choices"][0]["message"]["content"]
-            except:
-                reply = "i can't talk rn"
-            await message.channel.send(reply)
+            async with aiohttp.ClientSession() as session:
+                async with session.post(url, json=payload, headers=headers) as resp:
+                    data = await resp.json()
+                    reply = data["choices"][0]["message"]["content"]
+        except Exception as e:
+            print("AI Error:", e)
+            reply = "i can't talk rn"
+        await message.channel.send(reply)
 
-    await bot.process_commands(message)
 
 
 
