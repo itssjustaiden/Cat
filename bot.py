@@ -33,7 +33,6 @@ bot.remove_command("help")
 kitty_active = False
 Allowed_Users = [1343941910309634078, 1276629095077249077]
 CAT_MESSAGES = ["meow", "zzz time", "purrrrrr", "hiss", "mraw", "i love mommy", "snacks please"]
-Fuckasskitty = 1408088376459923496
 THREAD_ID = 1407466187377348750  
 CARSH_CHANNEL_ID = [1400123331335688332, 1406641982033498183]
 DATA_FILE = "carsh_data.json"
@@ -489,38 +488,6 @@ async def dmuser(ctx, user_id: int, amount: int, *, message: str):
     conf_msg = await ctx.send(f"sent `{sent}` DMs to {user.name}")
     await asyncio.sleep(0.5)
     await conf_msg.delete()
-
-if message.channel.id == Fuckasskitty and bot.user in message.mentions:
-    user_msg = message.content.replace(f"<@{bot.user.id}>", "").replace(f"<@!{bot.user.id}>", "").strip()
-    if not user_msg:
-        await message.channel.send("what’s up, why’d you ping me?")
-    else:
-        api_key = os.getenv("CAT_AI_KEY")
-        url = "https://openrouter.ai/api/v1/chat/completions"
-        personality = (
-            "You are a cat-themed AI chatbot. Respond with short, concise messages. Do NOT use emojis. Do NOT flirt or be sexual/freaky. "
-            "Use swear words ALOT. Be casual, a little snarky, and direct. Keep responses under 20 words when possible."
-        )
-        payload = {
-            "model": "deepseek/deepseek-r1:free",
-            "messages": [
-                {"role": "system", "content": personality},
-                {"role": "user", "content": user_msg}
-            ]
-        }
-        headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
-        try:
-            async with aiohttp.ClientSession() as session:
-                async with session.post(url, json=payload, headers=headers) as resp:
-                    data = await resp.json()
-                    reply = data["choices"][0]["message"]["content"]
-        except Exception as e:
-            print("AI Error:", e)
-            reply = "i can't talk rn"
-        await message.channel.send(reply)
-
-
-
 
 @bot.command()
 async def helpcarsh(ctx):
