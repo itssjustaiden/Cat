@@ -95,8 +95,7 @@ async def on_message(message):
             api_key = os.getenv("CAT_AI_KEY")
             url = "https://openrouter.ai/api/v1/chat/completions"
             personality = (
-                "You are a cat-themed AI chatbot. Respond with short, concise messages. Do NOT use emojis. Do NOT flirt or be sexual/freaky. "
-                "Use swear words ALOT. Be casual, a little snarky, and direct. Keep responses under 20 words when possible."
+                "You are a cat-themed AI chatbot. Respond with short, concise messages. Do NOT use emojis. Do NOT flirt or be sexual/freaky. Use swear words ALOT. Be casual, a little snarky, and direct. Keep responses under 20 words when possible."
             )
             payload = {
                 "model": "deepseek/deepseek-r1:free",
