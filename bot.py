@@ -869,82 +869,6 @@ async def on_message(message):
     await bot.process_commands(message)
 
 @bot.command()
-async def shop(ctx):
-    if not channel_check(ctx):
-        return
-
-    ShopEmbed = discord.Embed(
-        title="Carsh Shop",
-        description="meow",
-        color=discord.Color.purple()
-    )
-
-    for item_name, item_info in SHOP_ITEMS.items():
-        ShopEmbed.add_field(name=item_name, value=f"{item_info['price']} Carsh", inline=False)
-
-    await ctx.send(embed=ShopEmbed)
-
-
-# Name | Amount | Seconds / None | Call-able / None
-SHOP_ITEMS = {
-    "luckycoin": {"price": 1000, "timer": 3600, "action": "luckycoin"},
-    "doublesteal": {"price": 2500, "timer": 43200, "action": "doublesteal"},
-    "activatekitty": {"price": 5000, "timer": 600, "action": "kitty"},
-}
-
-active_effects = {"luckycoin": {}, "doublesteal": {}}
-
-@bot.command()
-async def buy(ctx, *, item_name: str):
-    item_name = item_name.lower()
-    if item_name not in SHOP_ITEMS:
-        await ctx.send("item not found")
-        return
-
-    item = SHOP_ITEMS[item_name]
-    action = item["action"]
-    timer = item["timer"]
-
-    if action == "kitty" and kitty_active:
-        await ctx.send("this kitty is already activated", ephemeral=True)
-        return
-    elif action in ["luckycoin", "doublesteal"]:
-        if ctx.author.id in active_effects[action] and active_effects[action][ctx.author.id] > int(time.time()):
-            await ctx.send(f"this {item_name} is already activated", ephemeral=True)
-            return
-
-    price = item["price"]
-    if get_balance(ctx.author.id) < price:
-        await ctx.send("You broke cuh get sum Carsh")
-        return
-
-    change_balance(ctx.author.id, -price)
-
-    if action == "kitty":
-        global kitty_active
-        kitty_active = True
-        await ctx.send(f"{ctx.author.mention} activated kitty mode for {timer//60} minutes")
-
-        async def deactivate_kitty():
-            await asyncio.sleep(timer)
-            global kitty_active
-            kitty_active = False
-            await ctx.send("kitty has expired.")
-
-        asyncio.create_task(deactivate_kitty())
-
-    elif action == "luckycoin":
-        active_effects["luckycoin"][ctx.author.id] = int(time.time()) + timer
-        await ctx.send(f"{ctx.author.mention} bought LuckyCoin! +10% chance in gambling for 1 hour.")
-
-    elif action == "doublesteal":
-        active_effects["doublesteal"][ctx.author.id] = int(time.time()) + timer
-        await ctx.send(f"{ctx.author.mention} bought DoubleSteal! Steal bonus active for 12 hours.")
-
-    else:
-        await ctx.send(f"{ctx.author.mention} bought **{item_name.title()}** for {price} Carsh")
-
-@bot.command()
 async def helpcarsh(ctx):
     if not channel_check(ctx):
         return
@@ -962,9 +886,7 @@ async def helpcarsh(ctx):
             "$ask <user> <amount> → ask someone for carsh\n"
             "$steal → get money if u got 0\n"
             "$give <user> <amount>` → give someone carsh\n"
-            "$lboard → check the leaderboard\n"
-            "$shop → buy/activate things\n"
-            "$buy <itemname> → buy things or activate things (temporary)"
+            "$lboard → check the leaderboard"
         ),
         inline=False
     )
