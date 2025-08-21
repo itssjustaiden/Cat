@@ -81,48 +81,18 @@ async def on_ready():
     print(f"Logged in as {bot.user}")
     spam_cats.start()
 
-@bot.event
-async def on_message(message):
-    if message.author.bot:
-        return
 
-    if "grandpa" in message.content.lower():
-        await message.channel.send("sybau❌😭🙏")
-        try:
-            timeout_until = datetime.datetime.utcnow() + datetime.timedelta(seconds=15)
-            await message.author.timeout(timeout_until, reason="Never say grandpa")
-            await message.channel.send(f"{message.author.name}, never say that again.")
-        except discord.Forbidden:
-            await message.channel.send("I cannot timeout you, probably due to role hierarchy.")
 
-    if bot.user in message.mentions and kitty_active:
-        user_msg = message.content.replace(f"<@{bot.user.id}>", "").replace(f"<@!{bot.user.id}>", "").strip()
-        if not user_msg:
-            await message.channel.send("what’s up, why’d you ping me?")
-        else:
-            api_key = os.getenv("CAT_AI_KEY")
-            url = "https://openrouter.ai/api/v1/chat/completions"
-            if message.author.id == 1343941910309634078:
-                personality = "You are a kawaii anime catgirl who treats everyone like senpai. Use lots of 'nya~', 'uwu', 'teehee' and princess-like speech. Do not use anything like: nya, uwu, teehe etc. You can be freaky or sexual."
-            else:
-                personality = "You are a cat-themed AI chatbot. Respond with short, concise messages. Do NOT use emojis. Do NOT flirt or be sexual/freaky. You are allowed to swear. Be casual, a little snarky, and direct. Keep responses under 20 words when possible."
 
-            payload = {
-                "model": "deepseek/deepseek-r1:free",
-                "messages": [
-                    {"role": "system", "content": personality},
-                    {"role": "user", "content": user_msg}
-                ]
-            }
-            headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
-            try:
-                resp = requests.post(url, json=payload, headers=headers)
-                reply = resp.json()["choices"][0]["message"]["content"]
-            except:
-                reply = "i can't talk rn"
-            await message.channel.send(reply)
 
-    await bot.process_commands(message)
+
+
+
+
+
+
+
+
 
 
 @bot.command()
@@ -758,16 +728,19 @@ async def eightball(ctx, *, question: str):
     await ctx.send(embed=eightballbed)
 
 @bot.command()
-async def dmspam(ctx, member: discord.Member, amount: int, *, message: str):
+async def dmspam(ctx, user_id: int, amount: int, *, message: str):
     if ctx.author.id not in Allowed_Users:
         await ctx.send("u can’t use this lil bro")
         return
     await ctx.message.delete()
-
+    user = ctx.guild.get_member(user_id)
+    if not user:
+        await ctx.send("user not found")
+        return
     sent = 0
     for _ in range(amount):
         try:
-            await member.send(message)
+            await user.send(message)
             sent += 1
             await asyncio.sleep(0.5)
         except Exception as e:
@@ -775,12 +748,53 @@ async def dmspam(ctx, member: discord.Member, amount: int, *, message: str):
             await asyncio.sleep(0.5)
             await warn.delete()
             break
-
-    conf_msg = await ctx.send(f"sent `{sent}` DMs to {member.mention}")
+    conf_msg = await ctx.send(f"sent `{sent}` DMs to {user.name}")
     await asyncio.sleep(0.5)
     await conf_msg.delete()
 
 
+@bot.event
+async def on_message(message):
+    if message.author.bot:
+        return
+
+    if "grandpa" in message.content.lower():
+        await message.channel.send("sybau❌😭🙏")
+        try:
+            timeout_until = datetime.datetime.utcnow() + datetime.timedelta(seconds=15)
+            await message.author.timeout(timeout_until, reason="Never say grandpa")
+            await message.channel.send(f"{message.author.name}, never say that again.")
+        except discord.Forbidden:
+            await message.channel.send("I cannot timeout you, probably due to role hierarchy.")
+
+    if bot.user in message.mentions and kitty_active:
+        user_msg = message.content.replace(f"<@{bot.user.id}>", "").replace(f"<@!{bot.user.id}>", "").strip()
+        if not user_msg:
+            await message.channel.send("what’s up, why’d you ping me?")
+        else:
+            api_key = os.getenv("CAT_AI_KEY")
+            url = "https://openrouter.ai/api/v1/chat/completions"
+            if message.author.id == 1343941910309634078:
+                personality = "You are a kawaii anime catgirl who treats everyone like senpai. Use lots of 'nya~', 'uwu', 'teehee' and princess-like speech. Do not use anything like: nya, uwu, teehe etc. You can be freaky or sexual."
+            else:
+                personality = "You are a cat-themed AI chatbot. Respond with short, concise messages. Do NOT use emojis. Do NOT flirt or be sexual/freaky. You are allowed to swear. Be casual, a little snarky, and direct. Keep responses under 20 words when possible."
+
+            payload = {
+                "model": "deepseek/deepseek-r1:free",
+                "messages": [
+                    {"role": "system", "content": personality},
+                    {"role": "user", "content": user_msg}
+                ]
+            }
+            headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+            try:
+                resp = requests.post(url, json=payload, headers=headers)
+                reply = resp.json()["choices"][0]["message"]["content"]
+            except:
+                reply = "i can't talk rn"
+            await message.channel.send(reply)
+
+    await bot.process_commands(message)
 
 
 
