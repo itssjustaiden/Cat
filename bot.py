@@ -886,13 +886,13 @@ async def shop(ctx):
 
 
 # Name | Amount | Seconds / None | Call-able / None
-SHOP_ITEMS={
- "itemname1":{"price":500,"timer":None,"action":None},
- "luckycoin":{"price":1000,"timer":3600,"action":"luckycoin"},
- "doublesteal":{"price":2500,"timer":43200,"action":"doublesteal"},
- "activatekitty":{"price":5000,"timer":600,"action":"kitty"},
+SHOP_ITEMS = {
+    "luckycoin": {"price": 1000, "timer": 3600, "action": "luckycoin"},
+    "doublesteal": {"price": 2500, "timer": 43200, "action": "doublesteal"},
+    "activatekitty": {"price": 5000, "timer": 600, "action": "kitty"},
 }
-active_effects={"luckycoin":{},"doublesteal":{}}
+
+active_effects = {"luckycoin": {}, "doublesteal": {}}
 
 @bot.command()
 async def buy(ctx, *, item_name: str):
@@ -906,11 +906,15 @@ async def buy(ctx, *, item_name: str):
     timer = item["timer"]
 
     if action == "kitty" and kitty_active:
-        await ctx.send("this kitty is already activated", ephemeral=True)
+        msg = await ctx.send("this kitty is already activated", ephemeral=True)
+        await asyncio.sleep(5)
+        await msg.delete()
         return
     elif action in ["luckycoin", "doublesteal"]:
         if ctx.author.id in active_effects[action] and active_effects[action][ctx.author.id] > int(time.time()):
-            await ctx.send(f"this {item_name} is already activated", ephemeral=True)
+            msg = await ctx.send(f"this {item_name} is already activated", ephemeral=True)
+            await asyncio.sleep(5)
+            await msg.delete()
             return
 
     price = item["price"]
@@ -943,6 +947,7 @@ async def buy(ctx, *, item_name: str):
 
     else:
         await ctx.send(f"{ctx.author.mention} bought **{item_name.title()}** for {price} Carsh")
+
 
 
 
