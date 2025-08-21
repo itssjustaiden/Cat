@@ -32,7 +32,7 @@ bot = commands.Bot(command_prefix="$", intents=intents)
 bot.remove_command("help")
 kitty_active = False
 Allowed_Users = [1343941910309634078, 1276629095077249077]
-CAT_MESSAGES = ["meow", "zzz time", "purrrrrr", "hiss", "mraw", "i love mommy", "snacks please"]
+CAT_MESSAGES = ["meow", "zzz time", "purrrrrr", "hiss", "mraw", "i love mommy", "snacks please", "thanks for feeding me mommy"]
 THREAD_ID = 1407466187377348750  
 CARSH_CHANNEL_ID = [1400123331335688332, 1406641982033498183]
 DATA_FILE = "carsh_data.json"
