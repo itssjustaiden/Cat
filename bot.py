@@ -875,14 +875,25 @@ async def shop(ctx):
 
     ShopEmbed = discord.Embed(
         title="Carsh Shop",
-        description="meow",
+        description="im losing my FUCKING sanity.",
         color=discord.Color.purple()
     )
 
-    ShopEmbed.add_field(name="ItemName1", value="500 Carsh", inline=False)
-    ShopEmbed.add_field(name="activatekitty", value="5000 Carsh", inline=False)
+    for item_name, data in SHOP_ITEMS.items():
+        price = data["price"]
+        timer = data["timer"]
+        field_value = f"{price} Carsh"
+        if timer:
+            hrs = timer // 3600
+            mins = (timer % 3600) // 60
+            if hrs > 0:
+                field_value += f" ({hrs}h)"
+            elif mins > 0:
+                field_value += f" ({mins}m)"
+        ShopEmbed.add_field(name=item_name, value=field_value, inline=False)
 
     await ctx.send(embed=ShopEmbed)
+
 
 # Name | Amount | Seconds / None | Call-able / None
 SHOP_ITEMS={
